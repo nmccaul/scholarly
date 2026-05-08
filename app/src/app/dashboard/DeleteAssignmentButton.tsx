@@ -23,7 +23,7 @@ export default function DeleteAssignmentButton({ assignmentId }: { assignmentId:
   if (confirming) {
     return (
       <div className="flex items-center gap-2 justify-end">
-        <span className="text-xs text-gray-500">Delete?</span>
+        <span className="text-xs text-slate-500">Delete?</span>
         <button
           onClick={handleDelete}
           disabled={deleting}
@@ -33,7 +33,7 @@ export default function DeleteAssignmentButton({ assignmentId }: { assignmentId:
         </button>
         <button
           onClick={() => setConfirming(false)}
-          className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+          className="text-xs font-semibold text-slate-500 hover:text-slate-700"
         >
           Cancel
         </button>
@@ -44,7 +44,7 @@ export default function DeleteAssignmentButton({ assignmentId }: { assignmentId:
   return (
     <button
       onClick={() => setConfirming(true)}
-      className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none"
+      className="text-slate-300 hover:text-red-500 transition-colors text-lg leading-none"
       aria-label="Delete assignment"
     >
       ×

@@ -158,7 +158,7 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
           {!isAdding && (
             <button
               onClick={() => setIsAdding(true)}
-              className="shrink-0 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="shrink-0 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
             >
               + Add Material
             </button>
@@ -201,7 +201,7 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
                     placeholder="e.g. Chapter 5: The French Revolution"
                     maxLength={200}
                     autoFocus
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400"
                   />
                 </div>
                 <div className="mb-4">
@@ -212,7 +212,7 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
                     placeholder="Paste the reading text or context here…"
                     rows={8}
                     maxLength={50000}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 resize-y"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400 resize-y"
                   />
                   <p className="mt-1 text-right text-xs text-slate-400">
                     {draftContent.length.toLocaleString()} / 50,000
@@ -230,7 +230,7 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
                   onChange={(e) => setDraftUrl(e.target.value)}
                   placeholder="https://…"
                   autoFocus
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400"
                 />
                 <p className="mt-1 text-xs text-slate-400">
                   The page title and readable text will be extracted automatically.
@@ -260,7 +260,7 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
               <button
                 onClick={source === 'text' ? handleAddText : source === 'url' ? handleAddFromUrl : handleAddFromPdf}
                 disabled={!canAdd}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
               >
                 {saving && <Spinner />}
                 {saving ? sourceLabel : 'Add Material'}
@@ -280,7 +280,7 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
             <p className="text-slate-400 mb-4">No materials yet.</p>
             <button
               onClick={() => setIsAdding(true)}
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
             >
               Add your first material
             </button>

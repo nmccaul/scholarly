@@ -11,10 +11,11 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
-      <header className="border-b border-slate-100">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-xs font-semibold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">
-            Scholarly
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-100">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white text-xs font-bold tracking-tight">S</div>
+            <span className="text-sm font-semibold text-zinc-900 tracking-tight">scholarly</span>
           </Link>
         </div>
       </header>
@@ -106,7 +107,7 @@ export default function PrivacyPage() {
               For privacy inquiries, data deletion requests, or HECVAT documentation:
             </p>
             <p className="mt-2">
-              <a href="mailto:nathanmccauley10@gmail.com" className="text-blue-600 hover:underline">
+              <a href="mailto:nathanmccauley10@gmail.com" className="text-red-600 hover:underline">
                 nathanmccauley10@gmail.com
               </a>
             </p>

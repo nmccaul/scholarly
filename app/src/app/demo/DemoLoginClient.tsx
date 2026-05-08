@@ -44,8 +44,9 @@ export default function DemoLoginClient() {
 
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
-            Scholarly
+          <div className="flex items-center justify-center gap-2.5 mb-5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white text-xs font-bold tracking-tight">S</div>
+            <span className="text-sm font-semibold text-zinc-900 tracking-tight">scholarly</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">
             See it in action
@@ -71,7 +72,7 @@ export default function DemoLoginClient() {
                 required
                 maxLength={200}
                 autoFocus
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400"
               />
             </div>
 
@@ -86,7 +87,7 @@ export default function DemoLoginClient() {
                 placeholder="jane@university.edu"
                 required
                 maxLength={200}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400"
               />
             </div>
 
@@ -101,7 +102,7 @@ export default function DemoLoginClient() {
                 placeholder="University of Utah"
                 required
                 maxLength={200}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400"
               />
             </div>
 
@@ -116,7 +117,7 @@ export default function DemoLoginClient() {
                 placeholder="e.g. debates, written essays, peer review, language practice…"
                 rows={3}
                 maxLength={1000}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 resize-none"
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400 resize-none"
               />
             </div>
 
@@ -127,7 +128,7 @@ export default function DemoLoginClient() {
             <button
               type="submit"
               disabled={submitting || !name.trim() || !email.trim() || !institution.trim()}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? (
                 <>

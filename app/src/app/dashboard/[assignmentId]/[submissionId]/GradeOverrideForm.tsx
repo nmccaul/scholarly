@@ -60,9 +60,9 @@ export default function GradeOverrideForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
+        <label className="block text-sm font-semibold text-slate-700 mb-1">
           Final Grade
-          <span className="ml-1 font-normal text-gray-400">/ {pointsPossible}</span>
+          <span className="ml-1 font-normal text-slate-400">/ {pointsPossible}</span>
         </label>
         <input
           type="number"
@@ -71,21 +71,21 @@ export default function GradeOverrideForm({
           step={0.5}
           value={grade}
           onChange={(e) => setGrade(e.target.value)}
-          className="w-32 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-32 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           placeholder="0"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-          Feedback <span className="font-normal text-gray-400">(optional)</span>
+        <label className="block text-sm font-semibold text-slate-700 mb-1">
+          Feedback <span className="font-normal text-slate-400">(optional)</span>
         </label>
         <textarea
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
           rows={3}
           placeholder="Add feedback for the student…"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
         />
       </div>
 
@@ -101,7 +101,7 @@ export default function GradeOverrideForm({
             <span className="text-red-600">Canvas sync failed — check sync log.</span>
           )}
           {result.syncStatus === null && (
-            <span className="text-gray-400">No Canvas sync (no lineitem URL).</span>
+            <span className="text-slate-400">No Canvas sync (no lineitem URL).</span>
           )}
         </div>
       )}
@@ -109,7 +109,7 @@ export default function GradeOverrideForm({
       <button
         type="submit"
         disabled={saving}
-        className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {saving ? 'Saving…' : 'Save & Sync to Canvas'}
       </button>

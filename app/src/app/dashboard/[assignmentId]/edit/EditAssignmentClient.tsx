@@ -250,7 +250,7 @@ export default function EditAssignmentClient({
                               : form.selectedMaterialIds.filter((id) => id !== m.id)
                           )
                         }}
-                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600"
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-600"
                       />
                       <span className="text-sm text-slate-700">{m.title}</span>
                     </label>
@@ -304,7 +304,7 @@ export default function EditAssignmentClient({
                 <button
                   type="button"
                   onClick={() => setAddingMaterial(true)}
-                  className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
                 >
                   <span className="text-base leading-none">+</span>
                   Add material for this assignment
@@ -396,7 +396,7 @@ export default function EditAssignmentClient({
               <button
                 type="button"
                 onClick={addCriterion}
-                className="mt-3 flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                className="mt-3 flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
               >
                 <span className="text-base leading-none">+</span>
                 Add criterion
@@ -421,7 +421,7 @@ export default function EditAssignmentClient({
             <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? 'Saving…' : 'Save Changes'}
             </button>
@@ -461,7 +461,7 @@ function Field({ label, hint, error, required, children }: { label: string; hint
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button type="button" onClick={() => onChange(!checked)} className="flex items-center gap-2 text-sm text-slate-700">
-      <div className={['relative h-5 w-9 rounded-full transition-colors', checked ? 'bg-blue-600' : 'bg-slate-300'].join(' ')}>
+      <div className={['relative h-5 w-9 rounded-full transition-colors', checked ? 'bg-red-600' : 'bg-slate-300'].join(' ')}>
         <div className={['absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-4' : 'translate-x-0.5'].join(' ')} />
       </div>
       {label}
@@ -563,7 +563,7 @@ function InlineMaterialForm({
               placeholder="e.g. Chapter 5 Reading"
               maxLength={200}
               autoFocus
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400"
             />
           </div>
           <div className="mb-3">
@@ -574,7 +574,7 @@ function InlineMaterialForm({
               placeholder="Paste the reading or context here…"
               rows={5}
               maxLength={50000}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400 resize-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400 resize-none"
             />
             <p className="mt-0.5 text-right text-xs text-slate-400">
               {content.length.toLocaleString()} / 50,000
@@ -592,7 +592,7 @@ function InlineMaterialForm({
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://…"
             autoFocus
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400"
           />
           <p className="mt-0.5 text-xs text-slate-400">Title and text extracted automatically.</p>
         </div>
@@ -619,7 +619,7 @@ function InlineMaterialForm({
           type="button"
           onClick={handleAdd}
           disabled={!canAdd}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {loading && <Spinner />}
           {addLabel}
@@ -649,7 +649,7 @@ function input(error?: string) {
   return [
     'w-full rounded-lg border px-3 py-2 text-sm text-slate-900 outline-none transition-colors',
     'placeholder:text-slate-400',
-    'focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+    'focus:ring-2 focus:ring-red-500 focus:border-transparent',
     error ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white hover:border-slate-300',
   ].join(' ')
 }

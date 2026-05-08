@@ -123,8 +123,9 @@ export default function TypePickerClient({
       <div className="mx-auto max-w-4xl px-6 py-10">
 
         <div className="mb-8">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Scholarly
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white text-xs font-bold tracking-tight">S</div>
+            <span className="text-sm font-semibold text-zinc-900 tracking-tight">scholarly</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Choose an Assignment Type</h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -141,7 +142,7 @@ export default function TypePickerClient({
               <div className="flex items-start justify-between gap-2">
                 <h2 className="text-sm font-semibold text-slate-900 leading-snug">{type.label}</h2>
                 {type.available ? (
-                  <span className="shrink-0 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded">
+                  <span className="shrink-0 text-xs font-medium text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
                     Available
                   </span>
                 ) : (
@@ -156,7 +157,7 @@ export default function TypePickerClient({
               {type.available ? (
                 <button
                   onClick={() => router.push(buildOralAssessmentUrl())}
-                  className="w-full py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="w-full py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Create
                 </button>

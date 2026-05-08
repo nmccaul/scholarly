@@ -48,7 +48,7 @@ export default async function SubmissionDetailPage({
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <div className="max-w-3xl mx-auto px-6 py-10">
 
         {/* Header */}
@@ -56,13 +56,13 @@ export default async function SubmissionDetailPage({
           <div className="flex items-center justify-between mb-4">
             <Link
               href={`/dashboard/${assignmentId}`}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-red-600 hover:text-red-700"
             >
               ← All submissions
             </Link>
             <div className="flex items-center gap-3 text-sm">
               {currentIndex >= 0 && (
-                <span className="text-gray-400">
+                <span className="text-slate-400">
                   {currentIndex + 1} of {submittedOnly.length}
                 </span>
               )}
@@ -70,8 +70,8 @@ export default async function SubmissionDetailPage({
                 href={prevSubmission ? `/dashboard/${assignmentId}/${prevSubmission.submissionId}` : '#'}
                 aria-disabled={!prevSubmission}
                 className={prevSubmission
-                  ? 'px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors'
-                  : 'px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 pointer-events-none'}
+                  ? 'px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors'
+                  : 'px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-gray-300 pointer-events-none'}
               >
                 ← Prev
               </Link>
@@ -79,17 +79,17 @@ export default async function SubmissionDetailPage({
                 href={nextSubmission ? `/dashboard/${assignmentId}/${nextSubmission.submissionId}` : '#'}
                 aria-disabled={!nextSubmission}
                 className={nextSubmission
-                  ? 'px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors'
-                  : 'px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 pointer-events-none'}
+                  ? 'px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors'
+                  : 'px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-gray-300 pointer-events-none'}
               >
                 Next →
               </Link>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-slate-900">
             {submission.studentName ?? 'Unknown student'}
           </h1>
-          <div className="text-sm text-gray-500 mt-1">
+          <div className="text-sm text-slate-500 mt-1">
             {submission.studentEmail && <span>{submission.studentEmail} &middot; </span>}
             {assignment.title} &middot;{' '}
             {submission.submittedAt ? formatDate(submission.submittedAt) : 'Not yet submitted'}
@@ -99,7 +99,7 @@ export default async function SubmissionDetailPage({
         {/* Video player */}
         {recordingUrl && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
               Recording
             </h2>
             <video
@@ -112,15 +112,15 @@ export default async function SubmissionDetailPage({
 
         {/* Transcript */}
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
             Transcript
           </h2>
           {submission.transcript ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-5 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
               {submission.transcript}
             </div>
           ) : (
-            <div className="bg-white border border-gray-200 rounded-xl p-5 text-sm text-gray-400">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 text-sm text-slate-400">
               No transcript available.
             </div>
           )}
@@ -129,16 +129,16 @@ export default async function SubmissionDetailPage({
         {/* Follow-up exchanges */}
         {submission.followUpExchanges.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
               Follow-up Exchanges
             </h2>
             <div className="space-y-3">
               {submission.followUpExchanges.map((e, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
-                  <div className="text-sm font-semibold text-blue-700 mb-1">
+                <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+                  <div className="text-sm font-semibold text-red-600 mb-1">
                     Q{i + 1}: {e.question}
                   </div>
-                  <div className="text-sm text-gray-700">{e.answerTranscript || '(no answer)'}</div>
+                  <div className="text-sm text-slate-700">{e.answerTranscript || '(no answer)'}</div>
                 </div>
               ))}
             </div>
@@ -148,30 +148,30 @@ export default async function SubmissionDetailPage({
         {/* AI grade breakdown */}
         {submission.aiGradeRationale && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
               AI Grade Breakdown
               {submission.aiGrade !== null && (
-                <span className="ml-2 text-gray-400 font-normal normal-case">
+                <span className="ml-2 text-slate-400 font-normal normal-case">
                   {submission.aiGrade} / {assignment.pointsPossible} pts
                 </span>
               )}
             </h2>
             <div className="space-y-2 mb-4">
               {submission.aiGradeRationale.criteriaScores.map((s, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-xl p-4">
+                <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
                   <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold text-gray-900 text-sm">{s.label}</span>
-                    <span className="text-sm text-gray-500 tabular-nums">{s.score} pts</span>
+                    <span className="font-semibold text-slate-900 text-sm">{s.label}</span>
+                    <span className="text-sm text-slate-500 tabular-nums">{s.score} pts</span>
                   </div>
-                  <p className="text-sm text-gray-600">{s.rationale}</p>
+                  <p className="text-sm text-slate-600">{s.rationale}</p>
                 </div>
               ))}
             </div>
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-              <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
                 Overall Feedback
               </div>
-              <p className="text-sm text-blue-900 leading-relaxed">
+              <p className="text-sm text-slate-800 leading-relaxed">
                 {submission.aiGradeRationale.overallFeedback}
               </p>
             </div>
@@ -179,8 +179,8 @@ export default async function SubmissionDetailPage({
         )}
 
         {/* Grade override */}
-        <section className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+        <section className="bg-white border border-slate-200 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
             Grade Override
           </h2>
           <GradeOverrideForm
@@ -210,7 +210,7 @@ function formatDate(iso: string) {
 function ErrorPage({ message }: { message: string }) {
   return (
     <div className="flex items-center justify-center min-h-screen p-8">
-      <p className="text-gray-600">{message}</p>
+      <p className="text-slate-600">{message}</p>
     </div>
   )
 }
