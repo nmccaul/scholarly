@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
-import pdfParse from 'pdf-parse'
+import * as pdfParseModule from 'pdf-parse'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pdfParse: (buf: Buffer) => Promise<{ text: string }> = (pdfParseModule as any).default ?? pdfParseModule
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024
 
