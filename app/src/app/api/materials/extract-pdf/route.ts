@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
+import pdfParse from 'pdf-parse'
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024
 
@@ -9,7 +10,8 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof SessionError) return err(e.message, 401)
     if (e instanceof ForbiddenError) return err(e.message, 403)
-    throw e
+    console.error('Unexpected error in requireInstructor:', e)
+    return err('Internal server error', 500)
   }
 
   let formData: FormData
@@ -32,15 +34,11 @@ export async function POST(req: NextRequest) {
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  // Dynamic import avoids pdf-parse's test-fixture loading at build time
-  const pdfModule = await import('pdf-parse')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfParse = (pdfModule as any).default ?? pdfModule as unknown as (buf: Buffer) => Promise<{ text: string }>
-
   let parsed: { text: string }
   try {
     parsed = await pdfParse(buffer)
-  } catch {
+  } catch (e) {
+    console.error('pdf-parse failed:', e)
     return err('Could not read that PDF. It may be encrypted or corrupted.', 422)
   }
 
