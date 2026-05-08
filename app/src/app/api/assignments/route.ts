@@ -107,12 +107,12 @@ function validate(body: CreateOralAssessmentRequest, isDemo = false): string | n
       if (!m.content || m.content.length < 1 || m.content.length > 50000) return 'each material content must be 1–50,000 characters'
     }
   }
-  if (!isDemo) {
+  const devMode = process.env.LTI_DEV_MODE === 'true'
+  if (!isDemo && !devMode) {
     if (!body.returnUrl) return 'returnUrl is required'
     try {
       const parsed = new URL(body.returnUrl)
-      const devMode = process.env.LTI_DEV_MODE === 'true'
-      if (!devMode && parsed.protocol !== 'https:') return 'returnUrl must be an https URL'
+      if (parsed.protocol !== 'https:') return 'returnUrl must be an https URL'
     } catch {
       return 'returnUrl must be a valid URL'
     }

@@ -163,7 +163,7 @@ export function BuilderClient({
 
   if (createdAssignmentId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
+      <div className="flex items-center justify-center py-24 px-8">
         <div className="max-w-md w-full rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center">
           <div className="text-3xl mb-3">✓</div>
           <h1 className="text-lg font-semibold text-slate-900 mb-1">Assignment created</h1>
@@ -195,8 +195,8 @@ export function BuilderClient({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="px-8 py-8">
+      <div className="max-w-2xl">
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
           <button

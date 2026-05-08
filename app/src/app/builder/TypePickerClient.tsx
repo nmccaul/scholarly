@@ -119,8 +119,8 @@ export default function TypePickerClient({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-4xl px-6 py-10">
+    <div className="px-6 py-10">
+      <div className="max-w-4xl">
 
         <div className="mb-8">
           <div className="flex items-center gap-2.5 mb-5">
