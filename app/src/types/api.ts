@@ -104,6 +104,20 @@ export interface SubmitResponse {
   syncStatus: 'success' | 'failed' | null  // null = no Canvas lineitem (dev mode or AI grading off)
 }
 
+// ─── Assignment generation ────────────────────────────────────────────────────
+
+export interface GenerateAssignmentRequest {
+  materialIds: string[]
+  assignmentMaterials: CourseMaterialInput[]
+  direction: string
+}
+
+export interface GenerateAssignmentResponse {
+  title: string
+  prompt: string
+  rubric: RubricCriterionInput[]
+}
+
 // ─── Grade override ───────────────────────────────────────────────────────────
 
 export interface GradeOverrideRequest {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { CreateOralAssessmentRequest, CreateAssignmentResponse, RubricCriterionInput } from '@/types/api'
+import type { CreateOralAssessmentRequest, CreateAssignmentResponse, RubricCriterionInput, GenerateAssignmentResponse } from '@/types/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +57,39 @@ export function BuilderClient({
   const [apiError, setApiError] = useState<string | null>(null)
   const [createdAssignmentId, setCreatedAssignmentId] = useState<string | null>(null)
   const [addingMaterial, setAddingMaterial] = useState(false)
+  const [direction, setDirection] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [generated, setGenerated] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
+
+  const canGenerate =
+    !generating &&
+    (form.selectedMaterialIds.length > 0 || form.assignmentMaterials.length > 0)
+
+  async function handleGenerate() {
+    setGenerating(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch('/api/assignments/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          materialIds: form.selectedMaterialIds,
+          assignmentMaterials: form.assignmentMaterials,
+          direction,
+        }),
+      })
+      const data = await res.json().catch(() => ({})) as GenerateAssignmentResponse & { error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Generation failed')
+      setForm((f) => ({ ...f, title: data.title, prompt: data.prompt, rubric: data.rubric }))
+      setErrors({})
+      setGenerated(true)
+    } catch (e) {
+      setGenerateError(e instanceof Error ? e.message : 'Generation failed')
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const totalPoints = form.rubric.reduce((sum, c) => sum + (c.maxPoints || 0), 0)
 
@@ -214,6 +247,103 @@ export function BuilderClient({
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
+          {/* Generate with AI */}
+          <div className="mb-6 rounded-xl border border-red-100 bg-red-50/60 p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-red-700">Generate with AI</h2>
+            </div>
+
+            {courseMaterials.length > 0 && (
+              <div className="mb-4">
+                <p className="mb-2 text-xs font-medium text-slate-600">Select materials to base the assignment on</p>
+                <div className="space-y-2">
+                  {courseMaterials.map((m) => (
+                    <label key={m.id} className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={form.selectedMaterialIds.includes(m.id)}
+                        onChange={(e) =>
+                          updateField(
+                            'selectedMaterialIds',
+                            e.target.checked
+                              ? [...form.selectedMaterialIds, m.id]
+                              : form.selectedMaterialIds.filter((id) => id !== m.id)
+                          )
+                        }
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                      />
+                      <span className="text-sm text-slate-700">{m.title}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {courseMaterials.length === 0 && form.assignmentMaterials.length === 0 && (
+              <p className="mb-4 text-sm text-slate-500">
+                Add materials in the <span className="font-medium">Context Materials</span> section below, or{' '}
+                <a href="/dashboard/materials" target="_blank" rel="noreferrer" className="text-red-600 hover:underline">
+                  add to your course library
+                </a>{' '}
+                first.
+              </p>
+            )}
+
+            <div className="mb-4">
+              <label className="mb-1 block text-xs font-medium text-slate-600">
+                Direction <span className="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <textarea
+                value={direction}
+                onChange={(e) => setDirection(e.target.value)}
+                placeholder="e.g. Focus on judicial review and the limits of legislative power"
+                rows={2}
+                maxLength={500}
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-slate-400 resize-none"
+              />
+            </div>
+
+            {generateError && (
+              <p className="mb-3 text-sm text-red-600">{generateError}</p>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={!canGenerate}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {generating ? (
+                  <>
+                    <Spinner />
+                    Generating…
+                  </>
+                ) : generated ? (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Regenerate
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Generate Assignment
+                  </>
+                )}
+              </button>
+              {generated && (
+                <span className="text-xs text-slate-500">Fields filled below — edit freely before saving.</span>
+              )}
+            </div>
+          </div>
+
           {/* Assignment Details */}
           <Section title="Assignment Details">
             <Field label="Title" error={errors.title} required>
@@ -291,35 +421,9 @@ export function BuilderClient({
           <Section
             title="Context Materials"
             action={
-              <span className="text-xs text-slate-400">Optional — gives the AI reading context when grading</span>
+              <span className="text-xs text-slate-400">Optional — add extra context for this assignment only</span>
             }
           >
-            {courseMaterials.length > 0 && (
-              <div className="mb-4">
-                <p className="mb-2 text-xs font-medium text-slate-500">Course library</p>
-                <div className="space-y-2">
-                  {courseMaterials.map((m) => (
-                    <label key={m.id} className="flex cursor-pointer items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={form.selectedMaterialIds.includes(m.id)}
-                        onChange={(e) => {
-                          updateField(
-                            'selectedMaterialIds',
-                            e.target.checked
-                              ? [...form.selectedMaterialIds, m.id]
-                              : form.selectedMaterialIds.filter((id) => id !== m.id)
-                          )
-                        }}
-                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-600"
-                      />
-                      <span className="text-sm text-slate-700">{m.title}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {form.assignmentMaterials.length > 0 && (
               <div className="mb-4">
                 <p className="mb-2 text-xs font-medium text-slate-500">For this assignment only</p>
@@ -361,26 +465,14 @@ export function BuilderClient({
                 onCancel={() => setAddingMaterial(false)}
               />
             ) : (
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setAddingMaterial(true)}
-                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
-                >
-                  <span className="text-base leading-none">+</span>
-                  Add material for this assignment
-                </button>
-                {courseMaterials.length === 0 && (
-                  <a
-                    href="/dashboard/materials"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    Manage course library →
-                  </a>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => setAddingMaterial(true)}
+                className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+              >
+                <span className="text-base leading-none">+</span>
+                Add material for this assignment
+              </button>
             )}
           </Section>
 
