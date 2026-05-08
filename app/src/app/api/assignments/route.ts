@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
     return err('Invalid JSON body', 400)
   }
 
-  const validationError = validate(body)
+  const isDemo = session.deploymentId === 'demo-deployment'
+  const validationError = validate(body, isDemo)
   if (validationError) return err(validationError, 400)
 
   const registration = await findRegistrationById(session.registrationId)
@@ -50,11 +51,14 @@ export async function POST(req: NextRequest) {
     await replaceAssignmentMaterials(assignmentId, session.courseId, session.userId, body.assignmentMaterials)
   }
 
-  const jwt = await buildDeepLinkResponseJwt(
-    registration,
-    { assignmentId, title: body.title, pointsPossible },
-    body.dlData
-  )
+  // Demo sessions have no Canvas to return to — skip JWT generation
+  const jwt = isDemo
+    ? ''
+    : await buildDeepLinkResponseJwt(
+        registration,
+        { assignmentId, title: body.title, pointsPossible },
+        body.dlData
+      )
 
   const response: CreateAssignmentResponse = { assignmentId, jwt, returnUrl: body.returnUrl }
   return NextResponse.json(response, { status: 201 })
@@ -62,7 +66,7 @@ export async function POST(req: NextRequest) {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function validate(body: CreateOralAssessmentRequest): string | null {
+function validate(body: CreateOralAssessmentRequest, isDemo = false): string | null {
   if (!body.title || body.title.length < 1 || body.title.length > 200) {
     return 'title must be 1–200 characters'
   }
@@ -103,15 +107,15 @@ function validate(body: CreateOralAssessmentRequest): string | null {
       if (!m.content || m.content.length < 1 || m.content.length > 50000) return 'each material content must be 1–50,000 characters'
     }
   }
-  if (!body.returnUrl) {
-    return 'returnUrl is required'
-  }
-  try {
-    const parsed = new URL(body.returnUrl)
-    const devMode = process.env.LTI_DEV_MODE === 'true'
-    if (!devMode && parsed.protocol !== 'https:') return 'returnUrl must be an https URL'
-  } catch {
-    return 'returnUrl must be a valid URL'
+  if (!isDemo) {
+    if (!body.returnUrl) return 'returnUrl is required'
+    try {
+      const parsed = new URL(body.returnUrl)
+      const devMode = process.env.LTI_DEV_MODE === 'true'
+      if (!devMode && parsed.protocol !== 'https:') return 'returnUrl must be an https URL'
+    } catch {
+      return 'returnUrl must be a valid URL'
+    }
   }
   return null
 }

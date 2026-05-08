@@ -152,6 +152,10 @@ export function BuilderClient({
   }
 
   function backToTypePicker() {
+    if (isDevMode) {
+      router.push('/builder')
+      return
+    }
     const params = new URLSearchParams({ return_url: returnUrl })
     if (dlData) params.set('dl_data', dlData)
     router.push(`/builder?${params.toString()}`)

@@ -13,7 +13,16 @@ export default async function BuilderPage({
   const returnUrl = typeof params.return_url === 'string' ? params.return_url : null
   const dlData = typeof params.dl_data === 'string' ? params.dl_data : undefined
 
-  if (!returnUrl && !DEV_MODE) {
+  // Try to get session regardless — needed to detect demo access
+  let session = null
+  try {
+    session = await requireInstructor()
+  } catch (e) {
+    if (!(e instanceof SessionError)) throw e
+  }
+
+  // Block only when there's no Canvas return_url, no dev mode, and no valid session
+  if (!returnUrl && !DEV_MODE && !session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
         <div className="max-w-md text-center">
@@ -26,34 +35,25 @@ export default async function BuilderPage({
     )
   }
 
-  let session
-  try {
-    session = await requireInstructor()
-  } catch (e) {
-    if (e instanceof SessionError) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
-          <p className="text-sm text-slate-500">Session expired. Please re-launch from Canvas.</p>
-        </div>
-      )
-    }
-    throw e
+  const isDemo = !returnUrl && !DEV_MODE
+
+  const initialRequested: string[] = []
+  if (session) {
+    const db = createServiceClient()
+    const { data } = await db
+      .from('assignment_type_requests')
+      .select('assignment_type')
+      .eq('user_id', session.userId)
+    initialRequested.push(
+      ...(data ?? []).map((r: { assignment_type: string }) => r.assignment_type)
+    )
   }
-
-  const db = createServiceClient()
-  const { data } = await db
-    .from('assignment_type_requests')
-    .select('assignment_type')
-    .eq('user_id', session.userId)
-
-  const initialRequested = (data ?? []).map(
-    (r: { assignment_type: string }) => r.assignment_type
-  )
 
   return (
     <TypePickerClient
-      returnUrl={returnUrl ?? 'http://localhost:3000'}
+      returnUrl={returnUrl ?? ''}
       dlData={dlData}
+      isDemo={isDemo}
       initialRequested={initialRequested}
     />
   )

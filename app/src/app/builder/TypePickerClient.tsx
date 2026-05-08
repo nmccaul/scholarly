@@ -64,10 +64,12 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
 export default function TypePickerClient({
   returnUrl,
   dlData,
+  isDemo = false,
   initialRequested = [],
 }: {
   returnUrl: string
   dlData?: string
+  isDemo?: boolean
   initialRequested?: string[]
 }) {
   const router = useRouter()
@@ -76,6 +78,7 @@ export default function TypePickerClient({
   const [unrequesting, setUnrequesting] = useState<string | null>(null)
 
   function buildOralAssessmentUrl() {
+    if (isDemo) return '/builder/new'
     const params = new URLSearchParams({ return_url: returnUrl })
     if (dlData) params.set('dl_data', dlData)
     return `/builder/new?${params.toString()}`
