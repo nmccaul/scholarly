@@ -82,9 +82,8 @@ export interface CreateSubmissionResponse {
   alreadySubmitted?: boolean
 }
 
-export interface GenerateFollowUpRequest {
-  // intentionally empty — server derives question index from DB state
-}
+// Intentionally empty — server derives question index from DB state.
+export type GenerateFollowUpRequest = Record<string, never>
 
 export interface GenerateFollowUpResponse {
   question: string

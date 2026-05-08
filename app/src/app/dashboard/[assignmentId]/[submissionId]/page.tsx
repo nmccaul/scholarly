@@ -6,6 +6,8 @@ import { createSignedDownloadUrl } from '@/lib/storage/recordings'
 import GradeOverrideForm from './GradeOverrideForm'
 import type { AssignmentId, SubmissionId } from '@/types/domain'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SubmissionDetailPage({
   params,
 }: {
@@ -48,21 +50,21 @@ export default async function SubmissionDetailPage({
     : null
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className="min-h-screen bg-[#FAF9F6]">
+      <div className="max-w-3xl px-8 py-8">
 
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <Link
               href={`/dashboard/${assignmentId}`}
-              className="text-sm text-red-600 hover:text-red-700"
+              className="text-sm font-medium text-[#6B7280] hover:text-[#18202A]"
             >
               ← All submissions
             </Link>
             <div className="flex items-center gap-3 text-sm">
               {currentIndex >= 0 && (
-                <span className="text-slate-400">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-[#8A8F98]">
                   {currentIndex + 1} of {submittedOnly.length}
                 </span>
               )}
@@ -70,8 +72,8 @@ export default async function SubmissionDetailPage({
                 href={prevSubmission ? `/dashboard/${assignmentId}/${prevSubmission.submissionId}` : '#'}
                 aria-disabled={!prevSubmission}
                 className={prevSubmission
-                  ? 'px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors'
-                  : 'px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-gray-300 pointer-events-none'}
+                  ? 'px-3 py-1.5 rounded-lg border border-[#E3E0D8] bg-white text-[#374151] hover:bg-[#FAF9F6] transition-colors'
+                  : 'px-3 py-1.5 rounded-lg border border-[#EEEAE2] bg-[#FAF9F6] text-[#AEB8C2] pointer-events-none'}
               >
                 ← Prev
               </Link>
@@ -79,17 +81,17 @@ export default async function SubmissionDetailPage({
                 href={nextSubmission ? `/dashboard/${assignmentId}/${nextSubmission.submissionId}` : '#'}
                 aria-disabled={!nextSubmission}
                 className={nextSubmission
-                  ? 'px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors'
-                  : 'px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-gray-300 pointer-events-none'}
+                  ? 'px-3 py-1.5 rounded-lg border border-[#E3E0D8] bg-white text-[#374151] hover:bg-[#FAF9F6] transition-colors'
+                  : 'px-3 py-1.5 rounded-lg border border-[#EEEAE2] bg-[#FAF9F6] text-[#AEB8C2] pointer-events-none'}
               >
                 Next →
               </Link>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-semibold tracking-tight text-[#18202A]">
             {submission.studentName ?? 'Unknown student'}
           </h1>
-          <div className="text-sm text-slate-500 mt-1">
+          <div className="text-sm text-[#6B7280] mt-1">
             {submission.studentEmail && <span>{submission.studentEmail} &middot; </span>}
             {assignment.title} &middot;{' '}
             {submission.submittedAt ? formatDate(submission.submittedAt) : 'Not yet submitted'}
@@ -99,28 +101,28 @@ export default async function SubmissionDetailPage({
         {/* Video player */}
         {recordingUrl && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+            <h2 className="font-mono text-[11px] font-medium text-[#6B7280] uppercase tracking-widest mb-3">
               Recording
             </h2>
             <video
               src={recordingUrl}
               controls
-              className="w-full rounded-xl bg-black aspect-video"
+              className="w-full rounded-lg bg-black aspect-video"
             />
           </section>
         )}
 
         {/* Transcript */}
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+          <h2 className="font-mono text-[11px] font-medium text-[#6B7280] uppercase tracking-widest mb-3">
             Transcript
           </h2>
           {submission.transcript ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-5 text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+            <div className="bg-white border border-[#E3E0D8] rounded-lg p-5 text-sm text-[#24313F] leading-relaxed whitespace-pre-wrap">
               {submission.transcript}
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-xl p-5 text-sm text-slate-400">
+            <div className="bg-white border border-[#E3E0D8] rounded-lg p-5 text-sm text-[#8A8F98]">
               No transcript available.
             </div>
           )}
@@ -129,16 +131,16 @@ export default async function SubmissionDetailPage({
         {/* Follow-up exchanges */}
         {submission.followUpExchanges.length > 0 && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+            <h2 className="font-mono text-[11px] font-medium text-[#6B7280] uppercase tracking-widest mb-3">
               Follow-up Exchanges
             </h2>
             <div className="space-y-3">
               {submission.followUpExchanges.map((e, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
-                  <div className="text-sm font-semibold text-red-600 mb-1">
+                <div key={i} className="bg-white border border-[#E3E0D8] rounded-lg p-4">
+                  <div className="font-mono text-[11px] font-semibold text-[#2563A6] mb-2 uppercase tracking-wider">
                     Q{i + 1}: {e.question}
                   </div>
-                  <div className="text-sm text-slate-700">{e.answerTranscript || '(no answer)'}</div>
+                  <div className="text-sm text-[#374151]">{e.answerTranscript || '(no answer)'}</div>
                 </div>
               ))}
             </div>
@@ -148,30 +150,30 @@ export default async function SubmissionDetailPage({
         {/* AI grade breakdown */}
         {submission.aiGradeRationale && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+            <h2 className="font-mono text-[11px] font-medium text-[#6B7280] uppercase tracking-widest mb-3">
               AI Grade Breakdown
               {submission.aiGrade !== null && (
-                <span className="ml-2 text-slate-400 font-normal normal-case">
+                <span className="ml-2 text-[#8A8F98] font-normal normal-case">
                   {submission.aiGrade} / {assignment.pointsPossible} pts
                 </span>
               )}
             </h2>
             <div className="space-y-2 mb-4">
               {submission.aiGradeRationale.criteriaScores.map((s, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-xl p-4">
+                <div key={i} className="bg-white border border-[#E3E0D8] rounded-lg p-4">
                   <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold text-slate-900 text-sm">{s.label}</span>
-                    <span className="text-sm text-slate-500 tabular-nums">{s.score} pts</span>
+                    <span className="font-semibold text-[#18202A] text-sm">{s.label}</span>
+                    <span className="font-mono text-xs text-[#6B7280] tabular-nums">{s.score} pts</span>
                   </div>
-                  <p className="text-sm text-slate-600">{s.rationale}</p>
+                  <p className="text-sm text-[#6B7280]">{s.rationale}</p>
                 </div>
               ))}
             </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+            <div className="bg-white border border-[#E3E0D8] rounded-lg p-4">
+              <div className="font-mono text-[11px] font-medium text-[#6B7280] uppercase tracking-widest mb-1">
                 Overall Feedback
               </div>
-              <p className="text-sm text-slate-800 leading-relaxed">
+              <p className="text-sm text-[#24313F] leading-relaxed">
                 {submission.aiGradeRationale.overallFeedback}
               </p>
             </div>
@@ -179,8 +181,8 @@ export default async function SubmissionDetailPage({
         )}
 
         {/* Grade override */}
-        <section className="bg-white border border-slate-200 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">
+        <section className="bg-white border border-[#E3E0D8] rounded-lg p-6">
+          <h2 className="font-mono text-[11px] font-medium text-[#6B7280] uppercase tracking-widest mb-4">
             Grade Override
           </h2>
           <GradeOverrideForm
@@ -210,7 +212,7 @@ function formatDate(iso: string) {
 function ErrorPage({ message }: { message: string }) {
   return (
     <div className="flex items-center justify-center min-h-screen p-8">
-      <p className="text-slate-600">{message}</p>
+      <p className="text-[#6B7280]">{message}</p>
     </div>
   )
 }

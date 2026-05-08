@@ -2,6 +2,8 @@ import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/sessi
 import { listCourseMaterials } from '@/lib/materials/repository'
 import { BuilderClient } from './BuilderClient'
 
+export const dynamic = 'force-dynamic'
+
 const DEV_MODE = process.env.LTI_DEV_MODE === 'true'
 
 export default async function BuilderNewPage({
@@ -38,12 +40,12 @@ export default async function BuilderNewPage({
 
   if (!returnUrl && !DEV_MODE && !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF9F6] p-8">
         <div className="max-w-md text-center">
-          <p className="text-sm font-medium text-red-600">
+          <p className="text-sm font-medium text-[#2563A6]">
             {sessionError ? 'Session expired' : 'Invalid launch'}
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-[#6B7280]">
             {sessionError
               ? 'Your session has expired. Please re-launch the assignment builder from Canvas.'
               : 'This page must be opened from Canvas. Please re-launch the assignment builder.'}

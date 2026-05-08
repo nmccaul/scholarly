@@ -200,16 +200,15 @@ export default function TypePickerClient({
   }
 
   return (
-    <div className="px-6 py-10">
-      <div className="max-w-4xl">
+    <div className="px-8 py-8">
+      <div className="max-w-5xl">
 
         <div className="mb-8">
-          <div className="flex items-center gap-2.5 mb-5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white text-xs font-bold tracking-tight">S</div>
-            <span className="text-sm font-semibold text-zinc-900 tracking-tight">scholarly</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900">New Assignment</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="mb-2 font-mono text-[11px] font-medium uppercase tracking-widest text-[#6B7280]">
+            Assignment registry
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#18202A]">New Assignment</h1>
+          <p className="text-sm text-[#6B7280] mt-1">
             Choose the type of AI-powered assignment you want to create.
           </p>
         </div>
@@ -219,25 +218,24 @@ export default function TypePickerClient({
             type.available ? (
               <div
                 key={type.id}
-                className="rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col"
+                className="rounded-lg bg-white border border-[#E3E0D8] overflow-hidden flex flex-col transition-colors hover:border-[#AEB8C2]"
               >
-                <div className="h-0.5 bg-gradient-to-r from-red-600 via-red-400 to-transparent" />
                 <div className="p-5 flex flex-col gap-4 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="w-9 h-9 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
-                      <AssignmentIcon id={type.id} className="w-4 h-4 text-red-500" />
+                    <div className="w-9 h-9 rounded-md bg-[#24313F] flex items-center justify-center shrink-0">
+                      <AssignmentIcon id={type.id} className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-[10px] font-mono font-semibold text-red-600 uppercase tracking-widest mt-1">
+                    <span className="rounded border border-[#BFD7EA] bg-[#EAF2FA] px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#2563A6] uppercase tracking-wider mt-1">
                       Available
                     </span>
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-sm font-semibold text-slate-900 leading-snug mb-1.5">{type.label}</h2>
-                    <p className="text-xs text-slate-500 leading-relaxed">{type.description}</p>
+                    <h2 className="text-sm font-semibold text-[#18202A] leading-snug mb-1.5">{type.label}</h2>
+                    <p className="text-xs text-[#6B7280] leading-relaxed">{type.description}</p>
                   </div>
                   <button
                     onClick={() => router.push(buildOralAssessmentUrl())}
-                    className="w-full py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    className="w-full py-2 text-sm font-semibold text-white bg-[#2563A6] rounded-md hover:bg-[#1E518B] transition-colors"
                   >
                     Create
                   </button>
@@ -246,26 +244,26 @@ export default function TypePickerClient({
             ) : (
               <div
                 key={type.id}
-                className="rounded-2xl border border-dashed border-slate-200 bg-white/50 flex flex-col"
+                className="rounded-lg border border-dashed border-[#E3E0D8] bg-white/60 flex flex-col"
               >
                 <div className="p-5 flex flex-col gap-4 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                      <AssignmentIcon id={type.id} className="w-4 h-4 text-slate-300" />
+                    <div className="w-8 h-8 rounded-md bg-[#F0EEE8] flex items-center justify-center shrink-0">
+                      <AssignmentIcon id={type.id} className="w-4 h-4 text-[#AEB8C2]" />
                     </div>
-                    <span className="text-[10px] font-mono font-semibold text-slate-300 uppercase tracking-widest mt-1">
+                    <span className="text-[10px] font-mono font-semibold text-[#8A8F98] uppercase tracking-wider mt-1">
                       Soon
                     </span>
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-sm font-medium text-slate-400 leading-snug mb-1.5">{type.label}</h2>
-                    <p className="text-xs text-slate-400 leading-relaxed">{type.description}</p>
+                    <h2 className="text-sm font-medium text-[#6B7280] leading-snug mb-1.5">{type.label}</h2>
+                    <p className="text-xs text-[#8A8F98] leading-relaxed">{type.description}</p>
                   </div>
                   {requested.has(type.id) ? (
                     <button
                       onClick={() => handleUnrequest(type.id)}
                       disabled={!!loading[type.id]}
-                      className="group w-full py-2 text-sm font-medium border rounded-lg transition-colors disabled:opacity-60 disabled:cursor-default border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                      className="group w-full py-2 text-sm font-medium border rounded-md transition-colors disabled:opacity-60 disabled:cursor-default border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-[#BFD7EA] hover:bg-[#EAF2FA] hover:text-[#2563A6]"
                     >
                       <span className="group-hover:hidden">
                         {loading[type.id] === 'unrequesting' ? 'Removing…' : 'Requested ✓'}
@@ -276,7 +274,7 @@ export default function TypePickerClient({
                     <button
                       onClick={() => handleRequest(type.id)}
                       disabled={!!loading[type.id]}
-                      className="w-full py-2 text-sm font-medium text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-60 disabled:cursor-default transition-colors"
+                      className="w-full py-2 text-sm font-medium text-[#6B7280] border border-[#E3E0D8] rounded-md hover:bg-[#FAF9F6] disabled:opacity-60 disabled:cursor-default transition-colors"
                     >
                       {loading[type.id] === 'requesting' ? 'Requesting…' : 'Request this type'}
                     </button>

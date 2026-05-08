@@ -2,6 +2,8 @@ import { requireInstructor, SessionError } from '@/lib/lti/session'
 import { listCourseMaterials } from '@/lib/materials/repository'
 import MaterialsClient from './MaterialsClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function CourseMaterialsPage() {
   let session
   try {
@@ -10,7 +12,7 @@ export default async function CourseMaterialsPage() {
     if (e instanceof SessionError) {
       return (
         <div className="flex items-center justify-center min-h-screen p-8">
-          <p className="text-slate-600">Session expired. Please re-launch from Canvas.</p>
+          <p className="text-[#6B7280]">Session expired. Please re-launch from Canvas.</p>
         </div>
       )
     }

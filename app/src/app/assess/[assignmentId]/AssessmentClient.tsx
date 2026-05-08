@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import type { AssignmentId, SubmissionId } from '@/types/domain'
 import type { SubmitResponse } from '@/types/api'
 
@@ -159,7 +160,9 @@ export default function AssessmentClient({
       clearTimer()
       stopStream()
     }
-  }, []) // assignment prop is stable (SSR); all mutation goes through refs — eslint-disable-line react-hooks/exhaustive-deps
+  // assignment prop is stable (SSR); all mutation goes through refs.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function enterRecordPhase() {
     if (enteringRecordRef.current) return
@@ -392,8 +395,8 @@ export default function AssessmentClient({
     return (
       <Centered>
         <div className="text-center max-w-sm">
-          <div className="text-xl font-semibold text-slate-800 mb-2">Already Submitted</div>
-          <div className="text-slate-500 text-sm mb-6">
+          <div className="text-xl font-semibold text-[#24313F] mb-2">Already Submitted</div>
+          <div className="text-[#6B7280] text-sm mb-6">
             You&rsquo;ve already submitted this assignment.
           </div>
           <div className="flex flex-col gap-3">
@@ -401,23 +404,23 @@ export default function AssessmentClient({
               <button
                 onClick={handleReset}
                 disabled={resetting}
-                className="block w-full px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="block w-full px-5 py-2.5 bg-[#2563A6] text-white text-sm font-semibold rounded-lg hover:bg-[#1E518B] disabled:opacity-50 transition-colors"
               >
                 {resetting ? 'Resetting…' : 'Try Again (Instructor Reset)'}
               </button>
             )}
-            <a
+            <Link
               href={`/dashboard/${assignment.id}`}
-              className="block px-5 py-2.5 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              className="block px-5 py-2.5 border border-[#E3E0D8] text-[#374151] text-sm font-semibold rounded-lg hover:bg-[#FAF9F6] transition-colors"
             >
               View Submissions
-            </a>
-            <a
+            </Link>
+            <Link
               href="/dashboard"
-              className="block px-5 py-2.5 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              className="block px-5 py-2.5 border border-[#E3E0D8] text-[#374151] text-sm font-semibold rounded-lg hover:bg-[#FAF9F6] transition-colors"
             >
               All Assignments
-            </a>
+            </Link>
           </div>
         </div>
       </Centered>
@@ -428,11 +431,11 @@ export default function AssessmentClient({
     return (
       <Centered>
         <div className="text-center max-w-sm">
-          <div className="text-red-600 text-xl font-semibold mb-2">Something went wrong</div>
-          <div className="text-slate-500 text-sm mb-6">{errorMsg}</div>
+          <div className="text-[#2563A6] text-xl font-semibold mb-2">Something went wrong</div>
+          <div className="text-[#6B7280] text-sm mb-6">{errorMsg}</div>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+            className="px-4 py-2 bg-[#2563A6] text-white rounded-lg text-sm hover:bg-[#1E518B]"
           >
             Try Again
           </button>
@@ -445,21 +448,21 @@ export default function AssessmentClient({
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-8">
         <div className="w-full max-w-xl">
-          <div className="text-sm font-semibold text-red-600 uppercase tracking-widest mb-4 text-center">
+          <div className="text-sm font-semibold text-[#2563A6] uppercase tracking-widest mb-4 text-center">
             Preparation Time
           </div>
-          <div className="text-8xl font-bold text-slate-900 text-center mb-8 tabular-nums">
+          <div className="text-8xl font-bold text-[#18202A] text-center mb-8 tabular-nums">
             {fmt(secondsLeft)}
           </div>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 mb-8">
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+          <div className="bg-[#FAF9F6] border border-[#E3E0D8] rounded-xl p-6 mb-8">
+            <div className="text-xs font-semibold text-[#8A8F98] uppercase tracking-wide mb-2">
               Prompt
             </div>
-            <p className="text-slate-800 text-base leading-relaxed">{config.prompt}</p>
+            <p className="text-[#24313F] text-base leading-relaxed">{config.prompt}</p>
           </div>
           <button
             onClick={enterRecordPhase}
-            className="w-full py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors"
+            className="w-full py-3 bg-[#2563A6] text-white font-semibold rounded-xl hover:bg-[#1E518B] transition-colors"
           >
             Start Recording Now
           </button>
@@ -476,19 +479,19 @@ export default function AssessmentClient({
       <div className="flex flex-col items-center min-h-screen p-8">
         <div className="w-full max-w-xl">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-sm font-semibold text-red-600">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2563A6]">
+              <span className="w-2 h-2 rounded-full bg-[#C2413A] animate-pulse" />
               Recording
             </div>
-            <div className="text-2xl font-bold tabular-nums text-slate-900">{fmt(secondsLeft)}</div>
+            <div className="text-2xl font-bold tabular-nums text-[#18202A]">{fmt(secondsLeft)}</div>
           </div>
-          <div className="h-1.5 bg-slate-200 rounded-full mb-6 overflow-hidden">
+          <div className="h-1.5 bg-[#E3E0D8] rounded-full mb-6 overflow-hidden">
             <div
-              className="h-full bg-red-400 rounded-full transition-all duration-1000"
+              className="h-full bg-[#C2413A] rounded-full transition-all duration-1000"
               style={{ width: `${pct}%` }}
             />
           </div>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-sm text-slate-700 leading-relaxed">
+          <div className="bg-[#FAF9F6] border border-[#E3E0D8] rounded-xl p-4 mb-6 text-sm text-[#374151] leading-relaxed">
             {config.prompt}
           </div>
           {config.cameraRequired && (
@@ -502,7 +505,7 @@ export default function AssessmentClient({
           )}
           <button
             onClick={stopMainRecording}
-            className="w-full py-3 bg-zinc-900 text-white font-semibold rounded-xl hover:bg-zinc-700 transition-colors"
+            className="w-full py-3 bg-[#24313F] text-white font-semibold rounded-xl hover:bg-[#18202A] transition-colors"
           >
             Finish Recording
           </button>
@@ -520,17 +523,17 @@ export default function AssessmentClient({
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-8">
           <div className="w-full max-w-xl">
-            <div className="text-sm font-semibold text-red-600 uppercase tracking-widest mb-4 text-center">
+            <div className="text-sm font-semibold text-[#2563A6] uppercase tracking-widest mb-4 text-center">
               Follow-up {followUpDisplayIndex + 1} of {config.followUpQuestionCount}
             </div>
             {currentQuestion ? (
               <>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 mb-8">
-                  <p className="text-slate-900 text-base leading-relaxed">{currentQuestion}</p>
+                <div className="bg-[#FAF9F6] border border-[#E3E0D8] rounded-xl p-6 mb-8">
+                  <p className="text-[#18202A] text-base leading-relaxed">{currentQuestion}</p>
                 </div>
                 <button
                   onClick={enterFollowUpRecordPhase}
-                  className="w-full py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors"
+                  className="w-full py-3 bg-[#2563A6] text-white font-semibold rounded-xl hover:bg-[#1E518B] transition-colors"
                 >
                   Record Your Answer
                 </button>
@@ -547,15 +550,15 @@ export default function AssessmentClient({
       return (
         <div className="flex flex-col items-center min-h-screen p-8">
           <div className="w-full max-w-xl">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-sm text-slate-800 leading-relaxed">
+            <div className="bg-[#FAF9F6] border border-[#E3E0D8] rounded-xl p-4 mb-6 text-sm text-[#24313F] leading-relaxed">
               {currentQuestion}
             </div>
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-red-600">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#2563A6]">
+                <span className="w-2 h-2 rounded-full bg-[#C2413A] animate-pulse" />
                 Recording
               </div>
-              <div className="text-2xl font-bold tabular-nums text-slate-900">{fmt(secondsLeft)}</div>
+              <div className="text-2xl font-bold tabular-nums text-[#18202A]">{fmt(secondsLeft)}</div>
             </div>
             {config.cameraRequired && (
               <video
@@ -568,7 +571,7 @@ export default function AssessmentClient({
             )}
             <button
               onClick={stopFollowUpRecording}
-              className="w-full py-3 bg-zinc-900 text-white font-semibold rounded-xl hover:bg-zinc-700 transition-colors"
+              className="w-full py-3 bg-[#24313F] text-white font-semibold rounded-xl hover:bg-[#18202A] transition-colors"
             >
               Finish Recording
             </button>
@@ -584,25 +587,25 @@ export default function AssessmentClient({
     return (
       <div className="min-h-screen p-8">
         <div className="max-w-xl mx-auto">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">Review Your Response</h1>
-          <p className="text-sm text-slate-500 mb-8">Correct any transcription errors before submitting.</p>
+          <h1 className="text-2xl font-bold text-[#18202A] mb-1">Review Your Response</h1>
+          <p className="text-sm text-[#6B7280] mb-8">Correct any transcription errors before submitting.</p>
 
-          <label className="block text-sm font-semibold text-slate-700 mb-2">Your response</label>
+          <label className="block text-sm font-semibold text-[#374151] mb-2">Your response</label>
           <textarea
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
             rows={8}
-            className="w-full border border-slate-300 rounded-xl p-4 text-sm text-slate-900 leading-relaxed focus:outline-none focus:ring-2 focus:ring-red-500 mb-8 resize-none"
+            className="w-full border border-[#D4CEC3] rounded-xl p-4 text-sm text-[#18202A] leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#2563A6] mb-8 resize-none"
           />
 
           {followUpExchanges.length > 0 && (
             <div className="mb-8">
-              <div className="text-sm font-semibold text-slate-700 mb-3">Follow-up exchanges</div>
+              <div className="text-sm font-semibold text-[#374151] mb-3">Follow-up exchanges</div>
               <div className="space-y-3">
                 {followUpExchanges.map((e, i) => (
-                  <div key={i} className="border border-slate-200 rounded-xl p-4">
-                    <div className="text-sm font-semibold text-red-600 mb-1">Q: {e.question}</div>
-                    <div className="text-sm text-slate-700">A: {e.answerTranscript}</div>
+                  <div key={i} className="border border-[#E3E0D8] rounded-xl p-4">
+                    <div className="text-sm font-semibold text-[#2563A6] mb-1">Q: {e.question}</div>
+                    <div className="text-sm text-[#374151]">A: {e.answerTranscript}</div>
                   </div>
                 ))}
               </div>
@@ -611,7 +614,7 @@ export default function AssessmentClient({
 
           <button
             onClick={handleSubmit}
-            className="w-full py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors"
+            className="w-full py-3 bg-[#2563A6] text-white font-semibold rounded-xl hover:bg-[#1E518B] transition-colors"
           >
             Submit for Grading
           </button>
@@ -634,61 +637,61 @@ export default function AssessmentClient({
     return (
       <div className="min-h-screen p-8">
         <div className="max-w-xl mx-auto">
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">Assessment Complete</h1>
-          <p className="text-sm text-slate-500 mb-8">
+          <h1 className="text-2xl font-bold text-[#18202A] mb-1">Assessment Complete</h1>
+          <p className="text-sm text-[#6B7280] mb-8">
             {syncStatus === 'success' && 'Your grade has been submitted to Canvas.'}
             {syncStatus === 'failed' && 'Your response was recorded, but the Canvas grade sync failed. Your instructor has been notified.'}
             {syncStatus === null && 'Your response has been recorded.'}
           </p>
 
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center mb-8">
-            <div className="text-6xl font-bold text-slate-900 mb-1 tabular-nums">
+          <div className="bg-[#FAF9F6] border border-[#E3E0D8] rounded-2xl p-8 text-center mb-8">
+            <div className="text-6xl font-bold text-[#18202A] mb-1 tabular-nums">
               {finalGrade !== null ? finalGrade.toFixed(0) : '—'}
-              <span className="text-3xl text-slate-400 font-normal"> / {pointsPossible}</span>
+              <span className="text-3xl text-[#8A8F98] font-normal"> / {pointsPossible}</span>
             </div>
-            {pct !== null && <div className="text-lg text-slate-500 mt-1">{pct}%</div>}
+            {pct !== null && <div className="text-lg text-[#6B7280] mt-1">{pct}%</div>}
           </div>
 
           {aiGradeRationale && (
             <>
-              <h2 className="text-base font-semibold text-slate-900 mb-4">Grade Breakdown</h2>
+              <h2 className="text-base font-semibold text-[#18202A] mb-4">Grade Breakdown</h2>
               <div className="space-y-3 mb-6">
                 {aiGradeRationale.criteriaScores.map((s, i) => (
-                  <div key={i} className="border border-slate-200 rounded-xl p-4">
+                  <div key={i} className="border border-[#E3E0D8] rounded-xl p-4">
                     <div className="flex justify-between items-start mb-1">
-                      <span className="font-semibold text-slate-900 text-sm">{s.label}</span>
-                      <span className="text-sm text-slate-500 tabular-nums font-medium">
+                      <span className="font-semibold text-[#18202A] text-sm">{s.label}</span>
+                      <span className="text-sm text-[#6B7280] tabular-nums font-medium">
                         {s.score} pts
                       </span>
                     </div>
-                    <p className="text-sm text-slate-600">{s.rationale}</p>
+                    <p className="text-sm text-[#6B7280]">{s.rationale}</p>
                   </div>
                 ))}
               </div>
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-8">
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+              <div className="bg-[#FAF9F6] border border-[#E3E0D8] rounded-xl p-4 mb-8">
+                <div className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
                   Overall Feedback
                 </div>
-                <p className="text-sm text-slate-800 leading-relaxed">
+                <p className="text-sm text-[#24313F] leading-relaxed">
                   {aiGradeRationale.overallFeedback}
                 </p>
               </div>
             </>
           )}
 
-          <div className="border-t border-slate-100 pt-8 flex flex-col gap-3">
-            <a
+          <div className="border-t border-[#EEEAE2] pt-8 flex flex-col gap-3">
+            <Link
               href={`/dashboard/${assignment.id}`}
-              className="block w-full text-center py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors text-sm"
+              className="block w-full text-center py-3 bg-[#2563A6] text-white font-semibold rounded-xl hover:bg-[#1E518B] transition-colors text-sm"
             >
               View Submissions
-            </a>
-            <a
+            </Link>
+            <Link
               href="/dashboard"
-              className="block w-full text-center py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition-colors text-sm"
+              className="block w-full text-center py-3 border border-[#E3E0D8] text-[#374151] font-semibold rounded-xl hover:bg-[#FAF9F6] transition-colors text-sm"
             >
               All Assignments
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -701,7 +704,7 @@ export default function AssessmentClient({
 function Centered({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center min-h-screen p-8">
-      <div className="text-slate-500 text-base">{children}</div>
+      <div className="text-[#6B7280] text-base">{children}</div>
     </div>
   )
 }

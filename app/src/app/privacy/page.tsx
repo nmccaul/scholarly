@@ -37,7 +37,7 @@ export default function PrivacyPage() {
           <Section title="Data We Collect">
             <p>When students and instructors use Scholarly through Canvas, we collect:</p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
-              <li><strong>Identity data</strong> — name, email address, and LTI user identifier provided by your institution's Canvas instance.</li>
+              <li><strong>Identity data</strong> — name, email address, and LTI user identifier provided by your institution&apos;s Canvas instance.</li>
               <li><strong>Audio recordings</strong> — voice recordings made during oral assessments. Audio is transcribed by OpenAI Whisper and then <strong>deleted immediately</strong> after transcription is complete.</li>
               <li><strong>Transcripts</strong> — the text transcript of each oral response, stored for grading and instructor review.</li>
               <li><strong>AI-generated grades and rationale</strong> — the score and written feedback produced by AI grading.</li>
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
           <Section title="Third-Party Services">
             <p>We rely on the following sub-processors to deliver the service:</p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
-              <li><strong>OpenAI</strong> — audio transcription (Whisper) and AI grading (GPT-4o). Data is processed under OpenAI's API terms; student data is not used for model training under our agreement.</li>
+              <li><strong>OpenAI</strong> — audio transcription (Whisper) and AI grading (GPT-4o). Data is processed under OpenAI&apos;s API terms; student data is not used for model training under our agreement.</li>
               <li><strong>Supabase</strong> — database and storage infrastructure, hosted on AWS.</li>
               <li><strong>Vercel</strong> — application hosting and serverless compute.</li>
               <li><strong>Upstash</strong> — ephemeral session state (Redis), no student data stored.</li>
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
           <Section title="Data Retention">
             <p>
               Audio recordings are deleted immediately after transcription. Transcripts, grades,
-              and assignment data are retained for the duration of your institution's active
+              and assignment data are retained for the duration of your institution&apos;s active
               subscription. Upon contract termination, data is deleted within 30 days unless
               a longer retention period is required by applicable law.
             </p>

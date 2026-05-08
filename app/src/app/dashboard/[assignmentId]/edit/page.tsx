@@ -4,6 +4,8 @@ import { listCourseMaterials, listAssignmentMaterials } from '@/lib/materials/re
 import EditAssignmentClient, { type ClientAssignmentForEdit } from './EditAssignmentClient'
 import type { AssignmentId } from '@/types/domain'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditAssignmentPage({
   params,
 }: {

@@ -60,9 +60,9 @@ export default function GradeOverrideForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1">
+        <label className="block text-sm font-semibold text-[#374151] mb-1">
           Final Grade
-          <span className="ml-1 font-normal text-slate-400">/ {pointsPossible}</span>
+          <span className="ml-1 font-normal text-[#8A8F98]">/ {pointsPossible}</span>
         </label>
         <input
           type="number"
@@ -71,37 +71,37 @@ export default function GradeOverrideForm({
           step={0.5}
           value={grade}
           onChange={(e) => setGrade(e.target.value)}
-          className="w-32 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="w-32 border border-[#E3E0D8] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563A6]"
           placeholder="0"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1">
-          Feedback <span className="font-normal text-slate-400">(optional)</span>
+        <label className="block text-sm font-semibold text-[#374151] mb-1">
+          Feedback <span className="font-normal text-[#8A8F98]">(optional)</span>
         </label>
         <textarea
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
           rows={3}
           placeholder="Add feedback for the student…"
-          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+          className="w-full border border-[#E3E0D8] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563A6] resize-none"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-[#C2413A]">{error}</p>}
 
       {result && (
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-green-600 font-medium">Saved.</span>
+          <span className="text-[#0F766E] font-medium">Saved.</span>
           {result.syncStatus === 'success' && (
-            <span className="text-green-600">Grade synced to Canvas.</span>
+            <span className="text-[#0F766E]">Grade synced to Canvas.</span>
           )}
           {result.syncStatus === 'failed' && (
-            <span className="text-red-600">Canvas sync failed — check sync log.</span>
+            <span className="text-[#C2413A]">Canvas sync failed. Check sync log.</span>
           )}
           {result.syncStatus === null && (
-            <span className="text-slate-400">No Canvas sync (no lineitem URL).</span>
+            <span className="text-[#8A8F98]">No Canvas sync (no lineitem URL).</span>
           )}
         </div>
       )}
@@ -109,13 +109,13 @@ export default function GradeOverrideForm({
       <button
         type="submit"
         disabled={saving}
-        className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-5 py-2.5 bg-[#2563A6] text-white text-sm font-semibold rounded-lg hover:bg-[#1E518B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {saving ? 'Saving…' : 'Save & Sync to Canvas'}
       </button>
 
       {syncStatus === 'failed' && !result && (
-        <p className="text-xs text-red-500 mt-1">
+        <p className="text-xs text-[#C2413A] mt-1">
           Previous Canvas sync failed. Saving will attempt to re-sync.
         </p>
       )}

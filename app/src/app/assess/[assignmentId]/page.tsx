@@ -3,6 +3,8 @@ import { findAssignmentWithConfig } from '@/lib/assignments/repository'
 import AssessmentClient, { type ClientAssignment } from './AssessmentClient'
 import type { AssignmentId } from '@/types/domain'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AssessPage({
   params,
 }: {

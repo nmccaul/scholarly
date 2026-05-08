@@ -55,7 +55,7 @@ export default function TermsPage() {
           <Section title="Instructor Responsibilities">
             <p>
               Instructors are responsible for ensuring that their use of the Service complies
-              with their institution's policies, applicable privacy laws (including FERPA), and
+              with their institution&apos;s policies, applicable privacy laws (including FERPA), and
               any applicable student consent requirements. Instructors must not configure
               assignments in ways that discriminate against students with documented disabilities.
             </p>

@@ -3,7 +3,7 @@ import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/sessi
 import { listCourseMaterials, createCourseMaterial } from '@/lib/materials/repository'
 import type { CourseMaterialInput, CourseMaterialResponse } from '@/types/api'
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   let session
   try {
     session = await requireInstructor()

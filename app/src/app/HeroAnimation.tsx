@@ -149,7 +149,7 @@ function DiscussionSlide() {
         style={{ animation: 'float-offset 6s ease-in-out infinite 2s' }}
       >
         <div className="px-4 py-3 border-b border-slate-100">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Aisha's matches</p>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Aisha&apos;s matches</p>
         </div>
         <div className="divide-y divide-slate-100">
           {[
