@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
-import * as pdfParseModule from 'pdf-parse'
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const pdfParse: (buf: Buffer) => Promise<{ text: string }> = (pdfParseModule as any).default ?? pdfParseModule
+import { PDFParse } from 'pdf-parse'
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024
 
@@ -36,15 +34,17 @@ export async function POST(req: NextRequest) {
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  let parsed: { text: string }
+  let text: string
   try {
-    parsed = await pdfParse(buffer)
+    const parser = new PDFParse({ data: buffer })
+    const result = await parser.getText()
+    text = result.text
   } catch (e) {
     console.error('pdf-parse failed:', e)
     return err('Could not read that PDF. It may be encrypted or corrupted.', 422)
   }
 
-  const content = parsed.text
+  const content = text
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+/g, ' ')
     .split('\n')
