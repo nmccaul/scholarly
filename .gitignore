@@ -1,0 +1,13 @@
+# Sensitive business documents
+BUSINESS_MODEL_STRATEGY.md
+COMPETITOR_ANALYSIS.md
+MARKETING_IDEAS.md
+BYU_CANVAS_DEPLOYMENT.md
+HECVAT_RESPONSE.md
+Hecvat4/
+
+# macOS
+.DS_Store
+
+# Claude memory (local only)
+memory/
