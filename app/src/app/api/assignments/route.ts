@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof SessionError) return err(e.message, 401)
     if (e instanceof ForbiddenError) return err(e.message, 403)
-    throw e
+    console.error('Unexpected error in requireInstructor:', e)
+    return err('Internal server error', 500)
   }
 
   let body: CreateOralAssessmentRequest
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
   if (validationError) return err(validationError, 400)
 
   const registration = await findRegistrationById(session.registrationId)
-  if (!registration) return err('Registration not found', 500)
+  if (!registration) return err('Session expired or invalid', 401)
 
   const pointsPossible = body.rubric.reduce((sum, c) => sum + c.maxPoints, 0)
 

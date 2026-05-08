@@ -3,18 +3,18 @@
 import { useState, useEffect } from 'react'
 
 const BARS = [
-  { h: 12, speed: '2.0s', delay: '0s'    },
-  { h: 22, speed: '2.3s', delay: '0.2s'  },
-  { h: 34, speed: '1.8s', delay: '0.4s'  },
-  { h: 28, speed: '2.5s', delay: '0.6s'  },
-  { h: 44, speed: '2.1s', delay: '0.1s'  },
-  { h: 40, speed: '1.9s', delay: '0.5s'  },
-  { h: 44, speed: '2.4s', delay: '0.3s'  },
-  { h: 36, speed: '2.0s', delay: '0.7s'  },
-  { h: 28, speed: '2.2s', delay: '0.45s' },
-  { h: 20, speed: '1.8s', delay: '0.15s' },
-  { h: 14, speed: '2.3s', delay: '0.6s'  },
-  { h: 8,  speed: '2.0s', delay: '0.35s' },
+  { id: 'b0',  h: 12, speed: '2.0s', delay: '0s'    },
+  { id: 'b1',  h: 22, speed: '2.3s', delay: '0.2s'  },
+  { id: 'b2',  h: 34, speed: '1.8s', delay: '0.4s'  },
+  { id: 'b3',  h: 28, speed: '2.5s', delay: '0.6s'  },
+  { id: 'b4',  h: 44, speed: '2.1s', delay: '0.1s'  },
+  { id: 'b5',  h: 40, speed: '1.9s', delay: '0.5s'  },
+  { id: 'b6',  h: 44, speed: '2.4s', delay: '0.3s'  },
+  { id: 'b7',  h: 36, speed: '2.0s', delay: '0.7s'  },
+  { id: 'b8',  h: 28, speed: '2.2s', delay: '0.45s' },
+  { id: 'b9',  h: 20, speed: '1.8s', delay: '0.15s' },
+  { id: 'b10', h: 14, speed: '2.3s', delay: '0.6s'  },
+  { id: 'b11', h: 8,  speed: '2.0s', delay: '0.35s' },
 ]
 const SLIDES = ['oral', 'discussion', 'reading'] as const
 type Slide = typeof SLIDES[number]
@@ -30,7 +30,7 @@ function OralSlide() {
     <>
       {/* Student recording card */}
       <div
-        className="absolute left-0 top-6 w-[300px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10"
+        className="absolute left-0 top-6 w-[300px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10 animate-gpu"
         style={{ animation: 'float 6s ease-in-out infinite' }}
       >
         {/* Prompt */}
@@ -50,10 +50,10 @@ function OralSlide() {
         {/* Waveform */}
         <div className="px-5 pb-5">
           <div className="flex items-end gap-[3px] h-12 mb-3">
-            {BARS.map(({ h, speed, delay }, i) => (
+            {BARS.map(({ id, h, speed, delay }) => (
               <span
-                key={i}
-                className="flex-1 rounded-full bg-red-400 origin-bottom"
+                key={id}
+                className="flex-1 rounded-full bg-red-400 origin-bottom animate-gpu"
                 style={{ height: `${h}px`, animation: `wave-bar-organic ${speed} ease-in-out infinite`, animationDelay: delay }}
               />
             ))}
@@ -66,7 +66,7 @@ function OralSlide() {
 
       {/* Grade card */}
       <div
-        className="absolute right-0 bottom-14 w-[196px] bg-white rounded-2xl border border-slate-200 shadow-md z-10"
+        className="absolute right-0 bottom-14 w-[196px] bg-white rounded-2xl border border-slate-200 shadow-md z-10 animate-gpu"
         style={{ animation: 'float-offset 6s ease-in-out infinite 2s' }}
       >
         <div className="px-4 pt-4 pb-3">
@@ -115,7 +115,7 @@ function DiscussionSlide() {
     <>
       {/* Posts card */}
       <div
-        className="absolute left-0 top-6 w-[300px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10"
+        className="absolute left-0 top-6 w-[300px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10 animate-gpu"
         style={{ animation: 'float 6s ease-in-out infinite' }}
       >
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -123,17 +123,17 @@ function DiscussionSlide() {
           <span className="text-xs text-slate-400">28 posts</span>
         </div>
         {[
-          { init: 'A', name: 'Aisha M.', tag: 'Pro carbon tax',    color: 'text-violet-600 bg-violet-50 border-violet-100' },
-          { init: 'J', name: 'Jake T.',  tag: 'Pro cap-and-trade', color: 'text-blue-600 bg-blue-50 border-blue-100'       },
-          { init: 'S', name: 'Sofia R.', tag: 'Pro regulation',    color: 'text-amber-600 bg-amber-50 border-amber-100'    },
-        ].map(({ init, name, tag, color }) => (
+          { init: 'A', name: 'Aisha M.', tag: 'Pro carbon tax',    avatarCls: 'text-violet-600 bg-violet-50', tagCls: 'text-violet-600 bg-violet-50 border-violet-100' },
+          { init: 'J', name: 'Jake T.',  tag: 'Pro cap-and-trade', avatarCls: 'text-blue-600 bg-blue-50',    tagCls: 'text-blue-600 bg-blue-50 border-blue-100'       },
+          { init: 'S', name: 'Sofia R.', tag: 'Pro regulation',    avatarCls: 'text-amber-600 bg-amber-50',  tagCls: 'text-amber-600 bg-amber-50 border-amber-100'    },
+        ].map(({ init, name, tag, avatarCls, tagCls }) => (
           <div key={name} className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 last:border-0">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${color.split(' ').slice(0, 3).join(' ')}`}>
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarCls}`}>
               {init}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-800">{name}</p>
-              <span className={`inline-block text-[10px] font-medium px-1.5 py-px rounded border ${color}`}>{tag}</span>
+              <span className={`inline-block text-[10px] font-medium px-1.5 py-px rounded border ${tagCls}`}>{tag}</span>
             </div>
           </div>
         ))}
@@ -145,7 +145,7 @@ function DiscussionSlide() {
 
       {/* Match card */}
       <div
-        className="absolute right-0 bottom-14 w-[196px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10"
+        className="absolute right-0 bottom-14 w-[196px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10 animate-gpu"
         style={{ animation: 'float-offset 6s ease-in-out infinite 2s' }}
       >
         <div className="px-4 py-3 border-b border-slate-100">
@@ -184,7 +184,7 @@ function ReadingSlide() {
     <>
       {/* Document card */}
       <div
-        className="absolute left-0 top-6 w-[300px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10"
+        className="absolute left-0 top-6 w-[300px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10 animate-gpu"
         style={{ animation: 'float 6s ease-in-out infinite' }}
       >
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -229,7 +229,7 @@ function ReadingSlide() {
 
       {/* Progress card */}
       <div
-        className="absolute right-0 bottom-14 w-[176px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10"
+        className="absolute right-0 bottom-14 w-[176px] bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden z-10 animate-gpu"
         style={{ animation: 'float-offset 6s ease-in-out infinite 2s' }}
       >
         <div className="px-4 py-3 border-b border-slate-100">
@@ -299,7 +299,7 @@ export default function HeroAnimation() {
   }
 
   return (
-    <div className="relative w-full h-[460px] select-none" aria-hidden>
+    <div className="relative w-full h-[460px] select-none overflow-hidden" aria-hidden>
       <div style={{ opacity: visible ? 1 : 0, transition: `opacity ${FADE_MS}ms ease-in-out`, position: 'absolute', inset: 0 }}>
         {SLIDES[index] === 'oral'       && <OralSlide />}
         {SLIDES[index] === 'discussion' && <DiscussionSlide />}

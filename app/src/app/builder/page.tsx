@@ -13,22 +13,30 @@ export default async function BuilderPage({
   const returnUrl = typeof params.return_url === 'string' ? params.return_url : null
   const dlData = typeof params.dl_data === 'string' ? params.dl_data : undefined
 
-  // Try to get session regardless — needed to detect demo access
   let session = null
+  let sessionError = false
   try {
     session = await requireInstructor()
   } catch (e) {
-    if (!(e instanceof SessionError)) throw e
+    if (e instanceof SessionError) {
+      sessionError = true
+    } else {
+      throw e
+    }
   }
 
-  // Block only when there's no Canvas return_url, no dev mode, and no valid session
+  // No return_url + no dev mode + no valid session = not a legitimate launch
   if (!returnUrl && !DEV_MODE && !session) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-8">
         <div className="max-w-md text-center">
-          <p className="text-sm font-medium text-red-600">Invalid launch</p>
+          <p className="text-sm font-medium text-red-600">
+            {sessionError ? 'Session expired' : 'Invalid launch'}
+          </p>
           <p className="mt-1 text-sm text-slate-500">
-            This page must be opened from Canvas. Please re-launch the assignment builder.
+            {sessionError
+              ? 'Your session has expired. Please re-launch the assignment builder from Canvas.'
+              : 'This page must be opened from Canvas. Please re-launch the assignment builder.'}
           </p>
         </div>
       </div>

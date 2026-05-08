@@ -148,8 +148,7 @@ export default function TypePickerClient({
 }) {
   const router = useRouter()
   const [requested, setRequested] = useState<Set<string>>(new Set(initialRequested))
-  const [requesting, setRequesting] = useState<string | null>(null)
-  const [unrequesting, setUnrequesting] = useState<string | null>(null)
+  const [loading, setLoading] = useState<Record<string, 'requesting' | 'unrequesting'>>({})
 
   function buildOralAssessmentUrl() {
     if (isDemo) return '/builder/new'
@@ -159,36 +158,44 @@ export default function TypePickerClient({
   }
 
   async function handleRequest(typeId: string) {
-    if (requested.has(typeId) || requesting === typeId) return
-    setRequesting(typeId)
+    if (requested.has(typeId) || loading[typeId]) return
+    setLoading((prev) => ({ ...prev, [typeId]: 'requesting' }))
     try {
-      await fetch('/api/assignment-type-requests', {
+      const res = await fetch('/api/assignment-type-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignmentType: typeId }),
       })
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`)
       setRequested((prev) => new Set([...prev, typeId]))
+    } catch (e) {
+      console.error('Failed to request assignment type:', e)
+      alert('Something went wrong. Please try again.')
     } finally {
-      setRequesting(null)
+      setLoading((prev) => { const next = { ...prev }; delete next[typeId]; return next })
     }
   }
 
   async function handleUnrequest(typeId: string) {
-    if (!requested.has(typeId) || unrequesting === typeId) return
-    setUnrequesting(typeId)
+    if (!requested.has(typeId) || loading[typeId]) return
+    setLoading((prev) => ({ ...prev, [typeId]: 'unrequesting' }))
     try {
-      await fetch('/api/assignment-type-requests', {
+      const res = await fetch('/api/assignment-type-requests', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ assignmentType: typeId }),
       })
+      if (!res.ok) throw new Error(`Unrequest failed: ${res.status}`)
       setRequested((prev) => {
         const next = new Set(prev)
         next.delete(typeId)
         return next
       })
+    } catch (e) {
+      console.error('Failed to remove assignment type request:', e)
+      alert('Something went wrong. Please try again.')
     } finally {
-      setUnrequesting(null)
+      setLoading((prev) => { const next = { ...prev }; delete next[typeId]; return next })
     }
   }
 
@@ -257,21 +264,21 @@ export default function TypePickerClient({
                   {requested.has(type.id) ? (
                     <button
                       onClick={() => handleUnrequest(type.id)}
-                      disabled={unrequesting === type.id}
+                      disabled={!!loading[type.id]}
                       className="group w-full py-2 text-sm font-medium border rounded-lg transition-colors disabled:opacity-60 disabled:cursor-default border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                     >
                       <span className="group-hover:hidden">
-                        {unrequesting === type.id ? 'Removing…' : 'Requested ✓'}
+                        {loading[type.id] === 'unrequesting' ? 'Removing…' : 'Requested ✓'}
                       </span>
                       <span className="hidden group-hover:inline">Remove request</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => handleRequest(type.id)}
-                      disabled={requesting === type.id}
+                      disabled={!!loading[type.id]}
                       className="w-full py-2 text-sm font-medium text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-60 disabled:cursor-default transition-colors"
                     >
-                      {requesting === type.id ? 'Requesting…' : 'Request this type'}
+                      {loading[type.id] === 'requesting' ? 'Requesting…' : 'Request this type'}
                     </button>
                   )}
                 </div>
