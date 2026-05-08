@@ -13,13 +13,19 @@ export async function DELETE(
   } catch (e) {
     if (e instanceof SessionError) return err(e.message, 401)
     if (e instanceof ForbiddenError) return err(e.message, 403)
-    throw e
+    console.error('Unexpected error in requireInstructor:', e)
+    return err('Internal server error', 500)
   }
 
   const { id } = await params
-  const deleted = await deleteCourseMaterial(id as CourseMaterialId, session.courseId)
-  if (!deleted) return err('Material not found', 404)
-  return NextResponse.json({ ok: true })
+  try {
+    const deleted = await deleteCourseMaterial(id as CourseMaterialId, session.courseId)
+    if (!deleted) return err('Material not found', 404)
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    console.error('Failed to delete course material:', e)
+    return err('Internal server error', 500)
+  }
 }
 
 function err(message: string, status: number) {

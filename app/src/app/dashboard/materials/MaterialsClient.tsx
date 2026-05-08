@@ -40,13 +40,11 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, content }),
     })
-    if (!res.ok) {
-      const data = await res.json()
-      throw new Error(data.error ?? 'Failed to save material')
-    }
-    const data: { id: string } = await res.json()
+    const data = await res.json().catch(() => ({})) as { id?: string; error?: string }
+    if (!res.ok) throw new Error(data.error ?? 'Failed to save material')
+    if (!data.id) throw new Error('Unexpected response from server')
     setMaterials((prev) => [
-      { id: data.id, title, content, createdAt: new Date().toISOString() },
+      { id: data.id!, title, content, createdAt: new Date().toISOString() },
       ...prev,
     ])
     resetForm()
@@ -79,9 +77,9 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
       })
-      const extracted = await extractRes.json()
+      const extracted = await extractRes.json().catch(() => ({})) as { title?: string; content?: string; error?: string }
       if (!extractRes.ok) throw new Error(extracted.error ?? 'Failed to fetch URL')
-      await saveMaterial(extracted.title, extracted.content)
+      await saveMaterial(extracted.title ?? url, extracted.content ?? '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch URL')
     } finally {
@@ -100,9 +98,9 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
         method: 'POST',
         body: formData,
       })
-      const extracted = await extractRes.json()
+      const extracted = await extractRes.json().catch(() => ({})) as { title?: string; content?: string; error?: string }
       if (!extractRes.ok) throw new Error(extracted.error ?? 'Failed to extract PDF')
-      await saveMaterial(extracted.title, extracted.content)
+      await saveMaterial(extracted.title ?? draftFile.name, extracted.content ?? '')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to extract PDF')
     } finally {
