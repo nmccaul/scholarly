@@ -7,10 +7,10 @@ import { findRegistrationById } from '@/lib/lti/registrations'
 import { gradeSubmission } from '@/lib/ai/grade'
 import { syncGradeToCanvas } from '@/lib/lti/grade-sync'
 import type { AiGradeRationale, SubmissionId } from '@/types/domain'
-import type { SubmitRequest, SubmitResponse } from '@/types/api'
+import type { SubmitResponse } from '@/types/api'
 
 export async function POST(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   let session
@@ -19,13 +19,6 @@ export async function POST(
   } catch (e) {
     if (e instanceof SessionError) return err(e.message, 401)
     throw e
-  }
-
-  let body: SubmitRequest
-  try {
-    body = await req.json()
-  } catch {
-    return err('Invalid JSON body', 400)
   }
 
   const { id } = await params
@@ -65,11 +58,11 @@ export async function POST(
     ])
     const contextMaterials = [...libraryMaterials, ...assignmentMaterials]
 
-    // Use server-side transcript and exchanges — never trust client-supplied grades input
+    // Use server-side transcript and exchanges; never trust client-supplied grading input.
     const result = await gradeSubmission({
       assignmentPrompt: assignment.config.prompt,
       rubric: assignment.config.rubric,
-      transcript: body.transcript || submission.transcript || '',
+      transcript: submission.transcript || '',
       followUpExchanges: submission.followUpExchanges.map((e) => ({
         question: e.question,
         answerTranscript: e.answerTranscript,

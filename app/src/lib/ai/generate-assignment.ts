@@ -11,16 +11,17 @@ export async function generateAssignmentDetails(params: {
     .map((m) => `[${m.title}]\n${m.content}`)
     .join('\n\n---\n\n')
 
-  const directionLine = params.direction.trim()
-    ? `\n\nTeacher's direction: ${params.direction.trim()}`
-    : ''
+  const teacherDirection = params.direction.trim()
+  const directionText = teacherDirection || 'No extra direction provided.'
 
   const response = await client.chat.completions.create({
     model: 'gpt-4o',
     messages: [
       {
         role: 'system',
-        content: `You are an expert educator designing oral assessment assignments. Given course materials and an optional direction from the teacher, generate a complete assignment.
+        content: `You are an expert educator designing oral assessment assignments. Generate a complete assignment from the course materials and the teacher's direction.
+
+The teacher's direction is high priority. Follow it closely when choosing the question, scope, difficulty, topic, and wording. If the teacher asks for a simple question, generate a simple question. If the direction conflicts with the general assignment style guidance, follow the teacher's direction while still returning valid JSON and a usable rubric.
 
 Return JSON only with this exact shape:
 {
@@ -39,7 +40,7 @@ Rubric guidelines:
       },
       {
         role: 'user',
-        content: `Course materials:\n\n${materialsText}${directionLine}`,
+        content: `Teacher direction:\n${directionText}\n\nCourse materials:\n\n${materialsText}`,
       },
     ],
     response_format: { type: 'json_object' },

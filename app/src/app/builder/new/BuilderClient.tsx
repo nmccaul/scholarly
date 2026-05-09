@@ -67,6 +67,12 @@ export function BuilderClient({
     !generating &&
     (form.selectedMaterialIds.length > 0 || form.assignmentMaterials.length > 0)
 
+  const selectedCourseMaterials = courseMaterials.filter((m) => form.selectedMaterialIds.includes(m.id))
+  const previewMaterials = [
+    ...selectedCourseMaterials.map((m) => ({ title: m.title, source: 'Library' })),
+    ...form.assignmentMaterials.map((m) => ({ title: m.title, source: 'Uploaded' })),
+  ]
+
   async function handleGenerate() {
     setGenerating(true)
     setGenerateError(null)
@@ -230,7 +236,7 @@ export function BuilderClient({
 
   return (
     <div className="px-8 py-8">
-      <div className="max-w-2xl">
+      <div className="max-w-6xl">
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
           <button
@@ -403,191 +409,201 @@ export function BuilderClient({
             </div>
           </div>
 
-          {/* Assignment Details */}
-          <Section title="Assignment Details">
-            <Field label="Title" error={errors.title} required>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => updateField('title', e.target.value)}
-                placeholder="e.g. Chapter 5 Oral Response"
-                maxLength={200}
-                className={input(errors.title)}
-              />
-            </Field>
-            <Field label="Prompt" hint="What should the student respond to?" error={errors.prompt} required>
-              <textarea
-                value={form.prompt}
-                onChange={(e) => updateField('prompt', e.target.value)}
-                placeholder="e.g. Explain the causes of the French Revolution and their significance."
-                rows={4}
-                maxLength={2000}
-                className={input(errors.prompt) + ' resize-none'}
-              />
-              <p className="mt-1 text-right font-mono text-[11px] text-[#8A8F98]">{form.prompt.length}/2000</p>
-            </Field>
-          </Section>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+            <div>
+              {/* Assignment Details */}
+              <Section title="Assignment Details">
+                <Field label="Title" error={errors.title} required>
+                  <input
+                    type="text"
+                    value={form.title}
+                    onChange={(e) => updateField('title', e.target.value)}
+                    placeholder="e.g. Chapter 5 Oral Response"
+                    maxLength={200}
+                    className={input(errors.title)}
+                  />
+                </Field>
+                <Field label="Prompt" hint="What should the student respond to?" error={errors.prompt} required>
+                  <textarea
+                    value={form.prompt}
+                    onChange={(e) => updateField('prompt', e.target.value)}
+                    placeholder="e.g. Explain the causes of the French Revolution and their significance."
+                    rows={4}
+                    maxLength={2000}
+                    className={input(errors.prompt) + ' resize-none'}
+                  />
+                  <p className="mt-1 text-right font-mono text-[11px] text-[#8A8F98]">{form.prompt.length}/2000</p>
+                </Field>
+              </Section>
 
-          {/* Recording Settings */}
-          <Section title="Recording Settings">
-            <div className="grid grid-cols-3 gap-4">
-              <Field label="Prep time (sec)">
-                <input
-                  type="number"
-                  value={form.preparationTimeSeconds}
-                  onChange={(e) => updateField('preparationTimeSeconds', Math.min(300, Math.max(0, +e.target.value)))}
-                  min={0}
-                  max={300}
-                  className={input()}
-                />
-              </Field>
-              <Field label="Response limit (sec)">
-                <input
-                  type="number"
-                  value={form.maxResponseTimeSeconds}
-                  onChange={(e) => updateField('maxResponseTimeSeconds', Math.min(600, Math.max(30, +e.target.value)))}
-                  min={30}
-                  max={600}
-                  className={input()}
-                />
-              </Field>
-              <Field label="Follow-up questions">
-                <input
-                  type="number"
-                  value={form.followUpQuestionCount}
-                  onChange={(e) => updateField('followUpQuestionCount', Math.min(5, Math.max(0, +e.target.value)))}
-                  min={0}
-                  max={5}
-                  className={input()}
-                />
-              </Field>
-            </div>
-            <div className="mt-4 flex gap-6">
-              <Toggle
-                label="Require camera"
-                checked={form.cameraRequired}
-                onChange={(v) => updateField('cameraRequired', v)}
-              />
-              <Toggle
-                label="AI grading"
-                checked={form.aiGradingEnabled}
-                onChange={(v) => updateField('aiGradingEnabled', v)}
-              />
-            </div>
-          </Section>
-
-          {/* Rubric */}
-          <Section
-            title="Rubric"
-            action={
-              <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-[#6B7280]">
-                Total <strong className="text-[#18202A]">{totalPoints} pts</strong>
-              </span>
-            }
-          >
-            <div className="space-y-3">
-              {form.rubric.map((criterion, index) => (
-                <div key={index} className="rounded-lg border border-[#E3E0D8] bg-white p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#8A8F98]">
-                      Criterion {index + 1}
-                    </span>
-                    {form.rubric.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeCriterion(index)}
-                        className="text-[#8A8F98] hover:text-[#C2413A] transition-colors text-lg leading-none"
-                        aria-label="Remove criterion"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="col-span-1">
-                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">Label</label>
-                      <input
-                        type="text"
-                        value={criterion.label}
-                        onChange={(e) => updateCriterion(index, 'label', e.target.value)}
-                        placeholder="e.g. Clarity"
-                        maxLength={100}
-                        className={input(errors[`rubric_${index}_label`])}
-                      />
-                      {errors[`rubric_${index}_label`] && (
-                        <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_label`]}</p>
-                      )}
-                    </div>
-                    <div className="col-span-2">
-                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">Description</label>
-                      <input
-                        type="text"
-                        value={criterion.description}
-                        onChange={(e) => updateCriterion(index, 'description', e.target.value)}
-                        placeholder="e.g. Response is clear and well-organized"
-                        maxLength={500}
-                        className={input(errors[`rubric_${index}_description`])}
-                      />
-                      {errors[`rubric_${index}_description`] && (
-                        <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_description`]}</p>
-                      )}
-                    </div>
-                    <div className="col-span-1">
-                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">Max points</label>
-                      <input
-                        type="number"
-                        value={criterion.maxPoints}
-                        onChange={(e) => updateCriterion(index, 'maxPoints', Math.min(100, Math.max(1, +e.target.value)))}
-                        min={1}
-                        max={100}
-                        className={input(errors[`rubric_${index}_points`])}
-                      />
-                      {errors[`rubric_${index}_points`] && (
-                        <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_points`]}</p>
-                      )}
-                    </div>
-                  </div>
+              {/* Recording Settings */}
+              <Section title="Recording Settings">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Field label="Prep time (sec)">
+                    <input
+                      type="number"
+                      value={form.preparationTimeSeconds}
+                      onChange={(e) => updateField('preparationTimeSeconds', Math.min(300, Math.max(0, +e.target.value)))}
+                      min={0}
+                      max={300}
+                      className={input()}
+                    />
+                  </Field>
+                  <Field label="Response limit (sec)">
+                    <input
+                      type="number"
+                      value={form.maxResponseTimeSeconds}
+                      onChange={(e) => updateField('maxResponseTimeSeconds', Math.min(600, Math.max(30, +e.target.value)))}
+                      min={30}
+                      max={600}
+                      className={input()}
+                    />
+                  </Field>
+                  <Field label="Follow-up questions">
+                    <input
+                      type="number"
+                      value={form.followUpQuestionCount}
+                      onChange={(e) => updateField('followUpQuestionCount', Math.min(5, Math.max(0, +e.target.value)))}
+                      min={0}
+                      max={5}
+                      className={input()}
+                    />
+                  </Field>
                 </div>
-              ))}
-            </div>
+                <div className="mt-4 flex flex-wrap gap-6">
+                  <Toggle
+                    label="Require camera"
+                    checked={form.cameraRequired}
+                    onChange={(v) => updateField('cameraRequired', v)}
+                  />
+                  <Toggle
+                    label="AI grading"
+                    checked={form.aiGradingEnabled}
+                    onChange={(v) => updateField('aiGradingEnabled', v)}
+                  />
+                </div>
+              </Section>
 
-            {form.rubric.length < 6 && (
-              <button
-                type="button"
-                onClick={addCriterion}
-                className="mt-3 flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors"
+              {/* Rubric */}
+              <Section
+                title="Rubric"
+                action={
+                  <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-[#6B7280]">
+                    Total <strong className="text-[#18202A]">{totalPoints} pts</strong>
+                  </span>
+                }
               >
-                <span className="text-base leading-none">+</span>
-                Add criterion
-              </button>
-            )}
-          </Section>
+                <div className="space-y-3">
+                  {form.rubric.map((criterion, index) => (
+                    <div key={index} className="rounded-lg border border-[#E3E0D8] bg-white p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#8A8F98]">
+                          Criterion {index + 1}
+                        </span>
+                        {form.rubric.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeCriterion(index)}
+                            className="text-[#8A8F98] hover:text-[#C2413A] transition-colors text-lg leading-none"
+                            aria-label="Remove criterion"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-4">
+                        <div className="sm:col-span-1">
+                          <label className="mb-1 block text-xs font-medium text-[#6B7280]">Label</label>
+                          <input
+                            type="text"
+                            value={criterion.label}
+                            onChange={(e) => updateCriterion(index, 'label', e.target.value)}
+                            placeholder="e.g. Clarity"
+                            maxLength={100}
+                            className={input(errors[`rubric_${index}_label`])}
+                          />
+                          {errors[`rubric_${index}_label`] && (
+                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_label`]}</p>
+                          )}
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="mb-1 block text-xs font-medium text-[#6B7280]">Description</label>
+                          <input
+                            type="text"
+                            value={criterion.description}
+                            onChange={(e) => updateCriterion(index, 'description', e.target.value)}
+                            placeholder="e.g. Response is clear and well-organized"
+                            maxLength={500}
+                            className={input(errors[`rubric_${index}_description`])}
+                          />
+                          {errors[`rubric_${index}_description`] && (
+                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_description`]}</p>
+                          )}
+                        </div>
+                        <div className="sm:col-span-1">
+                          <label className="mb-1 block text-xs font-medium text-[#6B7280]">Max points</label>
+                          <input
+                            type="number"
+                            value={criterion.maxPoints}
+                            onChange={(e) => updateCriterion(index, 'maxPoints', Math.min(100, Math.max(1, +e.target.value)))}
+                            min={1}
+                            max={100}
+                            className={input(errors[`rubric_${index}_points`])}
+                          />
+                          {errors[`rubric_${index}_points`] && (
+                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_points`]}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-          {/* Submit */}
-          {apiError && (
-            <div className="mb-4 rounded-lg border border-[#E7B8B4] bg-[#FBEDEA] px-4 py-3 text-sm text-[#C2413A]">
-              {apiError}
-            </div>
-          )}
+                {form.rubric.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={addCriterion}
+                    className="mt-3 flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors"
+                  >
+                    <span className="text-base leading-none">+</span>
+                    Add criterion
+                  </button>
+                )}
+              </Section>
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex items-center gap-2 rounded-lg bg-[#2563A6] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-            >
-              {submitting ? (
-                <>
-                  <Spinner />
-                  Creating assignment…
-                </>
-              ) : (
-                <>
-                  Create Assignment
-                  <span>→</span>
-                </>
+              {/* Submit */}
+              {apiError && (
+                <div className="mb-4 rounded-lg border border-[#E7B8B4] bg-[#FBEDEA] px-4 py-3 text-sm text-[#C2413A]">
+                  {apiError}
+                </div>
               )}
-            </button>
+
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex items-center gap-2 rounded-lg bg-[#2563A6] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {submitting ? (
+                    <>
+                      <Spinner />
+                      Creating assignment…
+                    </>
+                  ) : (
+                    <>
+                      Create Assignment
+                      <span>→</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <TeacherPreview
+              form={form}
+              totalPoints={totalPoints}
+              materials={previewMaterials}
+            />
           </div>
         </form>
       </div>
@@ -596,6 +612,134 @@ export function BuilderClient({
 }
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
+
+function TeacherPreview({
+  form,
+  totalPoints,
+  materials,
+}: {
+  form: FormState
+  totalPoints: number
+  materials: Array<{ title: string; source: string }>
+}) {
+  const prompt = form.prompt.trim()
+  const title = form.title.trim()
+  const readyCriteria = form.rubric.filter((c) => c.label.trim() || c.description.trim())
+
+  return (
+    <aside className="lg:sticky lg:top-6">
+      <div className="overflow-hidden rounded-lg border border-[#D4CEC3] bg-white shadow-sm">
+        <div className="border-b border-[#E3E0D8] bg-[#FAF9F6] px-5 py-4">
+          <p className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#2563A6]">Teacher Preview</p>
+          <h2 className="mt-1 text-lg font-semibold text-[#18202A]">
+            {title || 'Untitled assignment'}
+          </h2>
+        </div>
+
+        <div className="space-y-5 p-5">
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#374151]">Student prompt</h3>
+              <span className="rounded-full bg-[#EEF3F8] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[#2563A6]">
+                Oral
+              </span>
+            </div>
+            <p className="min-h-24 rounded-md border border-[#E3E0D8] bg-[#FAF9F6] p-3 text-sm leading-relaxed text-[#18202A]">
+              {prompt || 'Add or generate a prompt to preview the student experience.'}
+            </p>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold text-[#374151]">Student flow</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <PreviewMetric label="Prep" value={formatDuration(form.preparationTimeSeconds)} />
+              <PreviewMetric label="Response" value={formatDuration(form.maxResponseTimeSeconds)} />
+              <PreviewMetric label="Follow-ups" value={String(form.followUpQuestionCount)} />
+              <PreviewMetric label="Camera" value={form.cameraRequired ? 'Required' : 'Optional'} />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#374151]">Grading</h3>
+              <span className={[
+                'rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider',
+                form.aiGradingEnabled
+                  ? 'bg-[#EAF3ED] text-[#2F6B45]'
+                  : 'bg-[#F0EEE8] text-[#6B7280]',
+              ].join(' ')}
+              >
+                {form.aiGradingEnabled ? 'AI on' : 'AI off'}
+              </span>
+            </div>
+            <div className="rounded-md border border-[#E3E0D8]">
+              <div className="flex items-center justify-between border-b border-[#E3E0D8] px-3 py-2">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[#8A8F98]">Rubric</span>
+                <span className="text-xs font-semibold text-[#18202A]">{totalPoints} pts</span>
+              </div>
+              {readyCriteria.length > 0 ? (
+                <div className="divide-y divide-[#E3E0D8]">
+                  {readyCriteria.map((criterion, index) => (
+                    <div key={`${criterion.label}-${index}`} className="px-3 py-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-[#18202A]">
+                          {criterion.label.trim() || `Criterion ${index + 1}`}
+                        </p>
+                        <span className="shrink-0 text-xs text-[#6B7280]">{criterion.maxPoints || 0} pts</span>
+                      </div>
+                      {criterion.description.trim() && (
+                        <p className="mt-0.5 text-xs leading-relaxed text-[#6B7280]">{criterion.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="px-3 py-3 text-sm text-[#6B7280]">Add rubric criteria to preview grading.</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#374151]">Materials</h3>
+              <span className="text-xs text-[#6B7280]">{materials.length} attached</span>
+            </div>
+            {materials.length > 0 ? (
+              <div className="space-y-2">
+                {materials.map((material, index) => (
+                  <div key={`${material.source}-${material.title}-${index}`} className="flex items-center justify-between gap-3 rounded-md border border-[#E3E0D8] px-3 py-2">
+                    <span className="truncate text-sm text-[#374151]">{material.title}</span>
+                    <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-[#8A8F98]">{material.source}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-md border border-dashed border-[#D4CEC3] px-3 py-3 text-sm text-[#6B7280]">
+                No materials attached.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+function PreviewMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-[#E3E0D8] bg-[#FAF9F6] px-3 py-2">
+      <p className="font-mono text-[10px] uppercase tracking-wider text-[#8A8F98]">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-[#18202A]">{value}</p>
+    </div>
+  )
+}
+
+function formatDuration(seconds: number) {
+  if (seconds < 60) return `${seconds}s`
+  const minutes = Math.floor(seconds / 60)
+  const remainder = seconds % 60
+  return remainder === 0 ? `${minutes}m` : `${minutes}m ${remainder}s`
+}
 
 function Section({
   title,

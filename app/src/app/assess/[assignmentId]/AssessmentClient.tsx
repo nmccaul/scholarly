@@ -358,7 +358,7 @@ export default function AssessmentClient({
       const res = await fetch(`/api/submissions/${sid}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript }),
+        body: JSON.stringify({}),
       })
       if (!res.ok) throw new Error(`Submit failed: ${res.status}`)
       const data: SubmitResponse = await res.json()
@@ -588,15 +588,12 @@ export default function AssessmentClient({
       <div className="min-h-screen p-8">
         <div className="max-w-xl mx-auto">
           <h1 className="text-2xl font-bold text-[#18202A] mb-1">Review Your Response</h1>
-          <p className="text-sm text-[#6B7280] mb-8">Correct any transcription errors before submitting.</p>
+          <p className="text-sm text-[#6B7280] mb-8">Review the transcript generated from your recording before submitting.</p>
 
           <label className="block text-sm font-semibold text-[#374151] mb-2">Your response</label>
-          <textarea
-            value={transcript}
-            onChange={(e) => setTranscript(e.target.value)}
-            rows={8}
-            className="w-full border border-[#D4CEC3] rounded-xl p-4 text-sm text-[#18202A] leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#2563A6] mb-8 resize-none"
-          />
+          <div className="mb-8 min-h-40 whitespace-pre-wrap rounded-xl border border-[#D4CEC3] bg-[#FAF9F6] p-4 text-sm leading-relaxed text-[#18202A]">
+            {transcript || 'No transcript was generated.'}
+          </div>
 
           {followUpExchanges.length > 0 && (
             <div className="mb-8">
