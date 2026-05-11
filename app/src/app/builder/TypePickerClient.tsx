@@ -10,54 +10,117 @@ interface AssignmentType {
   available: boolean
 }
 
-const ASSIGNMENT_TYPES: AssignmentType[] = [
+interface AiRole {
+  id: string
+  label: string
+  definition: string
+  types: AssignmentType[]
+}
+
+const AI_ROLES: AiRole[] = [
   {
-    id: 'oral_assessment',
-    label: 'Oral Assessment',
-    description: 'Student speaks a response; AI transcribes, asks follow-up questions, and grades against a rubric.',
-    available: true,
+    id: 'no_ai',
+    label: 'No AI',
+    definition: 'The assignment is completed entirely without AI assistance. Students demonstrate knowledge and skills independently.',
+    types: [
+      {
+        id: 'oral_assessment',
+        label: 'Oral Assessment',
+        description: 'Student speaks a response; AI transcribes, asks follow-up questions, and grades against a rubric.',
+        available: true,
+      },
+    ],
   },
   {
-    id: 'socratic_seminar',
-    label: 'Socratic Seminar Simulation',
-    description: "AI plays devil's advocate; student defends a position through dialogue.",
-    available: false,
+    id: 'tutor',
+    label: 'AI as Tutor',
+    definition: 'AI provides direct, personalized instruction and explanations — adapting to what each student knows and where they struggle.',
+    types: [
+      {
+        id: 'adaptive_quiz',
+        label: 'Adaptive Reading Quiz',
+        description: 'AI generates questions from teacher-uploaded text; adapts based on student answers.',
+        available: false,
+      },
+    ],
   },
   {
-    id: 'concept_explanation',
-    label: 'Concept Explanation Challenge',
-    description: '"Explain this to a 5-year-old" — tests depth of understanding through simplification.',
-    available: false,
+    id: 'coach',
+    label: 'AI as Coach',
+    definition: 'AI prompts metacognition — helping students reflect on their process, regulate their thinking, and improve their approach.',
+    types: [
+      {
+        id: 'peer_review_sim',
+        label: 'Peer Review Simulation',
+        description: 'AI plays the role of a peer submitting work for the student to review and critique.',
+        available: false,
+      },
+    ],
   },
   {
-    id: 'ai_debate',
-    label: 'AI Debate Partner',
-    description: 'Student debates a topic against an AI opponent that argues the other side.',
-    available: false,
+    id: 'mentor',
+    label: 'AI as Mentor',
+    definition: 'AI provides ongoing formative feedback during the learning process, guiding students toward improvement over time.',
+    types: [
+      {
+        id: 'process_narration',
+        label: 'Process Narration',
+        description: 'Student narrates their problem-solving process while working through a problem.',
+        available: false,
+      },
+    ],
   },
   {
-    id: 'research_audit',
-    label: 'Research Validity Audit',
-    description: 'Student evaluates AI-generated sources for credibility and academic validity.',
-    available: false,
+    id: 'teammate',
+    label: 'AI as Teammate',
+    definition: 'AI collaborates with the student as a partner, contributing to a shared task and offering alternate viewpoints.',
+    types: [
+      {
+        id: 'ai_debate',
+        label: 'AI Debate Partner',
+        description: 'Student debates a topic against an AI opponent that argues the other side.',
+        available: false,
+      },
+    ],
   },
   {
-    id: 'adaptive_quiz',
-    label: 'Adaptive Reading Quiz',
-    description: 'AI generates questions from teacher-uploaded text; adapts based on student answers.',
-    available: false,
+    id: 'student',
+    label: 'AI as Student',
+    definition: 'The student teaches or explains to the AI — reinforcing their own understanding through the act of teaching.',
+    types: [
+      {
+        id: 'concept_explanation',
+        label: 'Concept Explanation Challenge',
+        description: '"Explain this to a 5-year-old" — tests depth of understanding through simplification.',
+        available: false,
+      },
+    ],
   },
   {
-    id: 'process_narration',
-    label: 'Process Narration',
-    description: 'Student narrates their problem-solving process while working through a problem.',
-    available: false,
+    id: 'simulator',
+    label: 'AI as Simulator',
+    definition: 'AI creates realistic scenarios, role-plays, or practice environments for deliberate skill development and transfer.',
+    types: [
+      {
+        id: 'socratic_seminar',
+        label: 'Socratic Seminar Simulation',
+        description: "AI plays devil's advocate; student defends a position through dialogue.",
+        available: false,
+      },
+    ],
   },
   {
-    id: 'peer_review_sim',
-    label: 'Peer Review Simulation',
-    description: 'AI plays the role of a peer submitting work for the student to review and critique.',
-    available: false,
+    id: 'tool',
+    label: 'AI as Tool',
+    definition: 'AI is used instrumentally for specific subtasks — helping students work more efficiently while keeping the thinking theirs.',
+    types: [
+      {
+        id: 'research_audit',
+        label: 'Research Validity Audit',
+        description: 'Student evaluates AI-generated sources for credibility and academic validity.',
+        available: false,
+      },
+    ],
   },
 ]
 
@@ -203,85 +266,101 @@ export default function TypePickerClient({
     <div className="px-8 py-8">
       <div className="max-w-5xl">
 
-        <div className="mb-8">
+        <div className="mb-10">
           <p className="mb-2 font-mono text-[11px] font-medium uppercase tracking-widest text-[#6B7280]">
             Assignment registry
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-[#18202A]">New Assignment</h1>
           <p className="text-sm text-[#6B7280] mt-1">
-            Choose the type of AI-powered assignment you want to create.
+            Every assignment type is designed around a specific role for AI in learning.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {ASSIGNMENT_TYPES.map((type) => (
-            type.available ? (
-              <div
-                key={type.id}
-                className="rounded-lg bg-white border border-[#E3E0D8] overflow-hidden flex flex-col transition-colors hover:border-[#AEB8C2]"
-              >
-                <div className="p-5 flex flex-col gap-4 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="w-9 h-9 rounded-md bg-[#24313F] flex items-center justify-center shrink-0">
-                      <AssignmentIcon id={type.id} className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="rounded border border-[#BFD7EA] bg-[#EAF2FA] px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#2563A6] uppercase tracking-wider mt-1">
-                      Available
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-sm font-semibold text-[#18202A] leading-snug mb-1.5">{type.label}</h2>
-                    <p className="text-xs text-[#6B7280] leading-relaxed">{type.description}</p>
-                  </div>
-                  <button
-                    onClick={() => router.push(buildOralAssessmentUrl())}
-                    className="w-full py-2 text-sm font-semibold text-white bg-[#2563A6] rounded-md hover:bg-[#1E518B] transition-colors"
-                  >
-                    Create
-                  </button>
+        <div className="flex flex-col gap-10">
+          {AI_ROLES.map((role) => (
+            <div key={role.id}>
+              {/* Role header */}
+              <div className="mb-4 pb-3 border-b border-[#E3E0D8]">
+                <div className="flex items-baseline gap-3">
+                  <h2 className="text-sm font-semibold text-[#18202A]">{role.label}</h2>
+                  <span className="text-xs text-[#8A8F98]">—</span>
+                  <p className="text-xs text-[#6B7280] leading-relaxed">{role.definition}</p>
                 </div>
               </div>
-            ) : (
-              <div
-                key={type.id}
-                className="rounded-lg border border-dashed border-[#E3E0D8] bg-white/60 flex flex-col"
-              >
-                <div className="p-5 flex flex-col gap-4 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="w-8 h-8 rounded-md bg-[#F0EEE8] flex items-center justify-center shrink-0">
-                      <AssignmentIcon id={type.id} className="w-4 h-4 text-[#AEB8C2]" />
-                    </div>
-                    <span className="text-[10px] font-mono font-semibold text-[#8A8F98] uppercase tracking-wider mt-1">
-                      Soon
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-sm font-medium text-[#6B7280] leading-snug mb-1.5">{type.label}</h2>
-                    <p className="text-xs text-[#8A8F98] leading-relaxed">{type.description}</p>
-                  </div>
-                  {requested.has(type.id) ? (
-                    <button
-                      onClick={() => handleUnrequest(type.id)}
-                      disabled={!!loading[type.id]}
-                      className="group w-full py-2 text-sm font-medium border rounded-md transition-colors disabled:opacity-60 disabled:cursor-default border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-[#BFD7EA] hover:bg-[#EAF2FA] hover:text-[#2563A6]"
+
+              {/* Assignment type cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {role.types.map((type) => (
+                  type.available ? (
+                    <div
+                      key={type.id}
+                      className="rounded-lg bg-white border border-[#E3E0D8] overflow-hidden flex flex-col transition-colors hover:border-[#AEB8C2]"
                     >
-                      <span className="group-hover:hidden">
-                        {loading[type.id] === 'unrequesting' ? 'Removing…' : 'Requested ✓'}
-                      </span>
-                      <span className="hidden group-hover:inline">Remove request</span>
-                    </button>
+                      <div className="p-5 flex flex-col gap-4 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="w-9 h-9 rounded-md bg-[#24313F] flex items-center justify-center shrink-0">
+                            <AssignmentIcon id={type.id} className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="rounded border border-[#BFD7EA] bg-[#EAF2FA] px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#2563A6] uppercase tracking-wider mt-1">
+                            Available
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-sm font-semibold text-[#18202A] leading-snug mb-1.5">{type.label}</h3>
+                          <p className="text-xs text-[#6B7280] leading-relaxed">{type.description}</p>
+                        </div>
+                        <button
+                          onClick={() => router.push(buildOralAssessmentUrl())}
+                          className="w-full py-2 text-sm font-semibold text-white bg-[#2563A6] rounded-md hover:bg-[#1E518B] transition-colors"
+                        >
+                          Create
+                        </button>
+                      </div>
+                    </div>
                   ) : (
-                    <button
-                      onClick={() => handleRequest(type.id)}
-                      disabled={!!loading[type.id]}
-                      className="w-full py-2 text-sm font-medium text-[#6B7280] border border-[#E3E0D8] rounded-md hover:bg-[#FAF9F6] disabled:opacity-60 disabled:cursor-default transition-colors"
+                    <div
+                      key={type.id}
+                      className="rounded-lg border border-dashed border-[#E3E0D8] bg-white/60 flex flex-col"
                     >
-                      {loading[type.id] === 'requesting' ? 'Requesting…' : 'Request this type'}
-                    </button>
-                  )}
-                </div>
+                      <div className="p-5 flex flex-col gap-4 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="w-8 h-8 rounded-md bg-[#F0EEE8] flex items-center justify-center shrink-0">
+                            <AssignmentIcon id={type.id} className="w-4 h-4 text-[#AEB8C2]" />
+                          </div>
+                          <span className="text-[10px] font-mono font-semibold text-[#8A8F98] uppercase tracking-wider mt-1">
+                            Soon
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-sm font-medium text-[#6B7280] leading-snug mb-1.5">{type.label}</h3>
+                          <p className="text-xs text-[#8A8F98] leading-relaxed">{type.description}</p>
+                        </div>
+                        {requested.has(type.id) ? (
+                          <button
+                            onClick={() => handleUnrequest(type.id)}
+                            disabled={!!loading[type.id]}
+                            className="group w-full py-2 text-sm font-medium border rounded-md transition-colors disabled:opacity-60 disabled:cursor-default border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-[#BFD7EA] hover:bg-[#EAF2FA] hover:text-[#2563A6]"
+                          >
+                            <span className="group-hover:hidden">
+                              {loading[type.id] === 'unrequesting' ? 'Removing…' : 'Requested ✓'}
+                            </span>
+                            <span className="hidden group-hover:inline">Remove request</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleRequest(type.id)}
+                            disabled={!!loading[type.id]}
+                            className="w-full py-2 text-sm font-medium text-[#6B7280] border border-[#E3E0D8] rounded-md hover:bg-[#FAF9F6] disabled:opacity-60 disabled:cursor-default transition-colors"
+                          >
+                            {loading[type.id] === 'requesting' ? 'Requesting…' : 'Request this type'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                ))}
               </div>
-            )
+            </div>
           ))}
         </div>
 

@@ -4,6 +4,43 @@
 
 An LTI 1.3 Advantage-compliant tool that integrates into Canvas LMS to deliver AI-powered assignment types. A single Canvas integration exposes a platform where teachers select from a library of AI-native assignments, configure them, and receive automatic grade passback.
 
+## Research Foundation & Product Philosophy
+
+Scholarly's product decisions are grounded in three research findings that should inform every feature decision:
+
+**1. Structure determines AI's impact — Dell'Acqua et al., 2023 (Harvard Business School)**
+A controlled experiment with 758 BCG consultants found that structured AI use improved work quality by 40%, while unstructured AI use produced results 19% *worse* than no AI at all. The same tool, used differently, produced opposite outcomes. This is the core premise of the product: the question is not whether students use AI, but whether they use it with intentionality and structure.
+
+**2. AI confidence erodes critical thinking — Lee et al., 2025 (Microsoft)**
+Higher confidence in AI correlated with *less* critical thinking. The people who believed they were best at using AI often had the most deteriorated analytical skills — and had no awareness it was happening. This is why Scholarly's assignment types keep student thinking at the center; AI assists, assesses, or challenges, but never replaces the cognitive act.
+
+**3. Near-universal adoption without instruction — Programs.com, 2025**
+92% of college students now use AI for academic work. Almost no one has been taught how to use it well. The gap between adoption and understanding is the environment Scholarly is built for.
+
+**The philosophical position:** It is teachers' responsibility to create the structured environment in which AI use leads to learning rather than its erosion.
+
+**Process visibility — the teacher intelligence layer:** Traditional LMS tools show teachers what a student produced, not how they got there. Apturi generates a record of student reasoning — spoken responses, follow-up exchanges, reading checkpoints — giving teachers insight into thinking, not just results. The goal is not just a gradebook but a window into how a class thinks: who genuinely understands, who is performing, and where instruction needs to go next.
+
+**The dual flywheel:** Apturi's assignments are designed to do two things at once. For students, they create the conditions for deeper thinking — explaining, defending, and engaging with material in real time develops the critical thinking that passive submission never requires. For teachers, those same moments generate the process visibility that makes better instruction possible. The same assignment that amplifies student learning gives teachers the intelligence to amplify it further.
+
+**The Mollick & Mollick framework (2023)**
+Scholarly's assignment library is organized around Mollick & Mollick's peer-reviewed framework — 8 roles that AI can play in education. Every assignment type maps to one of these roles, which are visible to teachers in the type picker:
+
+| Role | What it means |
+|---|---|
+| No AI | Student demonstrates understanding entirely independently |
+| AI as Tutor | AI provides direct, personalized instruction |
+| AI as Coach | AI prompts metacognition and self-regulation |
+| AI as Mentor | AI gives ongoing formative feedback |
+| AI as Teammate | AI collaborates as a partner on a shared task |
+| AI as Student | Student teaches the AI to reinforce their own understanding |
+| AI as Simulator | AI creates realistic practice scenarios |
+| AI as Tool | AI handles specific subtasks; core thinking stays with the student |
+
+Source: Mollick, E. & Mollick, L. (2023). *Assigning AI: Seven Approaches for Students, with Prompts.* SSRN.
+
+---
+
 ## Key Documents
 
 - `../PRD.md` — Full product requirements, user flows, API design, and engineering principles

@@ -29,17 +29,41 @@
 
 ### Problem
 
-**Traditional assignments were not built for the AI era.**
+**The problem is not that students use AI. It is that they use it without structure — and that is making them worse.**
 
-Students can now generate polished essays, discussion posts, and reading responses in seconds. That makes it harder for instructors to know what students actually understand.
+In 2023, researchers at Harvard Business School ran a controlled experiment with 758 management consultants at Boston Consulting Group. Every consultant had access to the same AI tool. Two groups emerged: one used AI with structure and intentionality, following specific protocols for when and how to engage it. The other used AI however felt natural, with no particular system.
 
-The problem is not that students have access to AI. The problem is that many assignments still measure final output instead of the thinking behind it.
+The structured group improved their work quality by 40%. The unstructured group performed 19% *worse* than consultants who did not use AI at all. Not "no improvement" — worse. The same tool, used differently, produced opposite outcomes. *(Dell'Acqua et al., 2023)*
+
+A 2025 Microsoft study reinforced this concern. Researchers found that higher confidence in AI correlated with *less* critical thinking. The people who believed they were best at using AI were often the ones whose analytical skills had deteriorated the most — and they had no awareness it was happening. *(Lee et al., 2025)*
+
+Meanwhile, 92% of college students now report using AI for academic work. Almost nobody has been taught how to use it well. *(Programs.com, 2025)*
+
+That gap — between near-universal adoption and near-zero instruction — is the problem Scholarly addresses. And it is teachers' responsibility to create the structured environment in which AI use leads to learning rather than its erosion.
+
+The secondary problem: most assignments still measure final output rather than the thinking behind it. Students can generate polished essays, discussion posts, and reading responses in seconds. Instructors need formats that reveal what students actually understand — not what they submitted.
 
 ### Solution
 
-**A new assignment layer for deeper learning.**
+**A structured assignment layer for the AI era.**
 
-Scholarly helps instructors create AI-native assignments where students speak, question, discuss, and reflect. Instead of only collecting final submissions, instructors get evidence of student reasoning, confusion, engagement, and growth.
+Scholarly helps instructors create assignments where the structure itself determines how AI is used — and where that structure is grounded in learning science. Instead of banning AI or ignoring it, Scholarly gives teachers a framework for intentional AI integration and a library of assignment types built around it.
+
+Every assignment type maps to one of eight pedagogically distinct AI roles — from No AI (pure independent assessment) to AI as Teammate, Tutor, Simulator, and more — based on Mollick & Mollick's peer-reviewed framework. Teachers choose the role, Scholarly builds the format around it.
+
+Students speak, question, discuss, and reflect rather than just submitting final products. Instructors get evidence of reasoning, not just output.
+
+### Teacher Intelligence
+
+Traditional LMS tools give teachers a grade and a submission. They show what a student produced, but nothing about how they got there. In an AI-enabled world, that gap is critical — a polished essay or correct answer is no longer reliable evidence of understanding.
+
+Apturi is built around **process visibility**. Every assignment generates a record of student reasoning — spoken responses, real-time follow-up exchanges, reading checkpoint answers — not just a final product. Teachers see where students got confident, where they hesitated, what they couldn't explain under pressure.
+
+This gives instructors a new kind of intelligence: not just "who passed and who failed," but "who actually understands this and who is performing." That insight surfaces the misconceptions worth addressing in class, identifies students who need more scaffolding, and makes teachers meaningfully better at their jobs. The teacher dashboard is not a gradebook — it is a window into how a class thinks.
+
+Apturi's assignments are designed to do two things at once. For students, they create the conditions for deeper thinking — explaining, defending, and engaging with material in real time develops the critical thinking that passive submission never requires. For teachers, those same moments generate the process visibility that makes better instruction possible: not just who answered correctly, but who reasoned well, who struggled with what, and where the class needs to go next.
+
+The same assignment that amplifies student learning gives teachers the intelligence to amplify it further.
 
 ### Platform
 
