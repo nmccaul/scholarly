@@ -4,6 +4,7 @@ import { getSubmission, appendFollowUp } from '@/lib/submissions/repository'
 import { findAssignmentWithConfig } from '@/lib/assignments/repository'
 import { createSignedUploadUrl, followUpRecordingPath } from '@/lib/storage/recordings'
 import { generateFollowUpQuestion } from '@/lib/ai/follow-up'
+import { apiError } from '@/lib/api/response'
 import type { SubmissionId } from '@/types/domain'
 import type { GenerateFollowUpResponse } from '@/types/api'
 
@@ -15,19 +16,19 @@ export async function POST(
   try {
     session = await requireSession()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
+    if (e instanceof SessionError) return apiError(e.message, 401)
     throw e
   }
 
   const { id } = await params
   const submission = await getSubmission(id as SubmissionId, session.userId)
-  if (!submission) return err('Submission not found', 404)
+  if (!submission) return apiError('Submission not found', 404)
 
-  if (submission.status !== 'in_progress') return err('Submission already finalized', 409)
-  if (!submission.transcript) return err('Transcript not yet available', 400)
+  if (submission.status !== 'in_progress') return apiError('Submission already finalized', 409)
+  if (!submission.transcript) return apiError('Transcript not yet available', 400)
 
   const assignment = await findAssignmentWithConfig(submission.assignmentId)
-  if (!assignment || assignment.courseId !== session.courseId) return err('Assignment not found', 500)
+  if (!assignment || assignment.courseId !== session.courseId) return apiError('Assignment not found', 500)
 
   const priorExchanges = submission.followUpExchanges
     .filter((e) => e.answerTranscript)
@@ -53,8 +54,4 @@ export async function POST(
 
   const response: GenerateFollowUpResponse = { question, questionIndex, uploadUrl }
   return NextResponse.json(response)
-}
-
-function err(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
 }

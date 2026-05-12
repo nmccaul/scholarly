@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
 import { createServiceClient } from '@/lib/supabase/client'
+import { apiError } from '@/lib/api/response'
 
 export async function POST(req: NextRequest) {
   let session
   try {
     session = await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     throw e
   }
 
@@ -16,11 +17,11 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return err('Invalid JSON body', 400)
+    return apiError('Invalid JSON body', 400)
   }
 
   if (!body.assignmentType || typeof body.assignmentType !== 'string') {
-    return err('assignmentType is required', 400)
+    return apiError('assignmentType is required', 400)
   }
 
   const db = createServiceClient()
@@ -39,8 +40,8 @@ export async function DELETE(req: NextRequest) {
   try {
     session = await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     throw e
   }
 
@@ -48,11 +49,11 @@ export async function DELETE(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return err('Invalid JSON body', 400)
+    return apiError('Invalid JSON body', 400)
   }
 
   if (!body.assignmentType || typeof body.assignmentType !== 'string') {
-    return err('assignmentType is required', 400)
+    return apiError('assignmentType is required', 400)
   }
 
   const db = createServiceClient()
@@ -67,6 +68,3 @@ export async function DELETE(req: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-function err(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
-}

@@ -19,10 +19,10 @@ function getRedis(): Redis {
 
 export const NONCE_TTL_SECONDS = 600 // 10 minutes
 
-interface NonceRecord {
+// No `consumed` flag — deletion is the consumption, making replay attacks impossible.
+export interface NonceRecord {
   state: string
   registrationId: string
-  consumed: boolean
 }
 
 export async function storeNonce(
@@ -30,7 +30,7 @@ export async function storeNonce(
   state: string,
   registrationId: string
 ): Promise<void> {
-  const record: NonceRecord = { state, registrationId, consumed: false }
+  const record: NonceRecord = { state, registrationId }
   await getRedis().set(`nonce:${nonce}`, JSON.stringify(record), {
     ex: NONCE_TTL_SECONDS,
   })
@@ -45,19 +45,11 @@ export async function checkRateLimit(key: string, maxRequests: number, windowSec
   return count <= maxRequests
 }
 
+// Atomic GETDEL: returns the record and deletes it in one operation.
+// A second call with the same nonce returns null — replay is impossible.
 export async function consumeNonce(nonce: string): Promise<NonceRecord | null> {
-  const key = `nonce:${nonce}`
-  const raw = await getRedis().get<string>(key)
+  const raw = await getRedis().getdel(`nonce:${nonce}`)
   if (!raw) return null
-
-  const record: NonceRecord =
-    typeof raw === 'string' ? JSON.parse(raw) : (raw as NonceRecord)
-
-  if (record.consumed) return null
-
-  record.consumed = true
-  await getRedis().set(key, JSON.stringify(record), { ex: NONCE_TTL_SECONDS })
-
-  return record
+  return typeof raw === 'string' ? JSON.parse(raw) : (raw as NonceRecord)
 }
 

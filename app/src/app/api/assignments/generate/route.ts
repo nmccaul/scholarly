@@ -2,35 +2,42 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
 import { getMaterialsByIds } from '@/lib/materials/repository'
 import { generateAssignmentDetails } from '@/lib/ai/generate-assignment'
+import { apiError } from '@/lib/api/response'
 import type { GenerateAssignmentRequest, GenerateAssignmentResponse } from '@/types/api'
 import type { CourseMaterialId } from '@/types/domain'
+
+const MAX_DIRECTION_LENGTH = 2000
 
 export async function POST(req: NextRequest) {
   let session
   try {
     session = await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     console.error('Unexpected error in requireInstructor:', e)
-    return err('Internal server error', 500)
+    return apiError('Internal server error', 500)
   }
 
   let body: GenerateAssignmentRequest
   try {
     body = await req.json()
   } catch {
-    return err('Invalid JSON body', 400)
+    return apiError('Invalid JSON body', 400)
   }
 
   const { materialIds = [], assignmentMaterials = [], direction = '' } = body
 
   if (!Array.isArray(materialIds) || !Array.isArray(assignmentMaterials)) {
-    return err('materialIds and assignmentMaterials must be arrays', 400)
+    return apiError('materialIds and assignmentMaterials must be arrays', 400)
   }
 
   if (materialIds.length === 0 && assignmentMaterials.length === 0) {
-    return err('At least one material is required to generate an assignment', 400)
+    return apiError('At least one material is required to generate an assignment', 400)
+  }
+
+  if (typeof direction === 'string' && direction.length > MAX_DIRECTION_LENGTH) {
+    return apiError(`direction must be ${MAX_DIRECTION_LENGTH} characters or fewer`, 400)
   }
 
   try {
@@ -49,10 +56,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(response)
   } catch (e) {
     console.error('Assignment generation failed:', e)
-    return err('Generation failed. Please try again.', 500)
+    return apiError('Generation failed. Please try again.', 500)
   }
-}
-
-function err(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
 }

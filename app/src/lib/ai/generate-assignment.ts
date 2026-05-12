@@ -14,12 +14,13 @@ export async function generateAssignmentDetails(params: {
   const teacherDirection = params.direction.trim()
   const directionText = teacherDirection || 'No extra direction provided.'
 
-  const response = await client.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'system',
-        content: `You are an expert educator designing oral assessment assignments. Generate a complete assignment from the course materials and the teacher's direction.
+  const response = await client.chat.completions.create(
+    {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert educator designing oral assessment assignments. Generate a complete assignment from the course materials and the teacher's direction.
 
 The teacher's direction is high priority. Follow it closely when choosing the question, scope, difficulty, topic, and wording. If the teacher asks for a simple question, generate a simple question. If the direction conflicts with the general assignment style guidance, follow the teacher's direction while still returning valid JSON and a usable rubric.
 
@@ -37,15 +38,17 @@ Rubric guidelines:
 - maxPoints per criterion: 4–8, summing to exactly 20
 - label: 1–3 words (e.g. "Content Accuracy", "Communication", "Use of Evidence")
 - description: one sentence describing what earns full marks`,
-      },
-      {
-        role: 'user',
-        content: `Teacher direction:\n${directionText}\n\nCourse materials:\n\n${materialsText}`,
-      },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.7,
-  })
+        },
+        {
+          role: 'user',
+          content: `Teacher direction:\n${directionText}\n\nCourse materials:\n\n${materialsText}`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+    },
+    { timeout: 30_000 }
+  )
 
   const content = response.choices[0]?.message?.content
   if (!content) throw new Error('No response from AI')

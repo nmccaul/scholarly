@@ -30,12 +30,13 @@ export async function gradeSubmission(params: {
     fullTranscript += `\n\nFollow-up exchanges:\n${exchanges}`
   }
 
-  const response = await client.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      {
-        role: 'system',
-        content: `You are an academic assessor grading a student's oral assessment.
+  const response = await client.chat.completions.create(
+    {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an academic assessor grading a student's oral assessment.
 
 Assignment prompt: ${params.assignmentPrompt}${materialsText}
 
@@ -44,12 +45,14 @@ ${rubricText}
 
 Grade each rubric criterion with a score from 0 to its max points, and provide a brief rationale for each score.
 Return JSON only: { "criteria_scores": [{ "label": string, "score": number, "rationale": string }], "overall_feedback": string }`,
-      },
-      { role: 'user', content: `Student's full transcript:\n${fullTranscript}` },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.3,
-  })
+        },
+        { role: 'user', content: `Student's full transcript:\n${fullTranscript}` },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+    },
+    { timeout: 30_000 }
+  )
 
   const content = response.choices[0]?.message?.content
   if (!content) throw new Error('No grading response from AI')
@@ -60,11 +63,14 @@ Return JSON only: { "criteria_scores": [{ "label": string, "score": number, "rat
   }
 
   const rationale: AiGradeRationale = {
-    criteriaScores: parsed.criteria_scores.map((s) => ({
-      label: s.label,
-      score: Number(s.score),
-      rationale: s.rationale,
-    })),
+    criteriaScores: parsed.criteria_scores.map((s, i) => {
+      const maxPoints = params.rubric[i]?.maxPoints ?? 100
+      return {
+        label: s.label,
+        score: Math.max(0, Math.min(Number(s.score), maxPoints)),
+        rationale: s.rationale,
+      }
+    }),
     overallFeedback: parsed.overall_feedback,
   }
 

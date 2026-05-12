@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
 import { listCourseMaterials, createCourseMaterial } from '@/lib/materials/repository'
+import { apiError } from '@/lib/api/response'
 import type { CourseMaterialInput, CourseMaterialResponse } from '@/types/api'
 
 export async function GET() {
@@ -8,10 +9,10 @@ export async function GET() {
   try {
     session = await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     console.error('Unexpected error in requireInstructor:', e)
-    return err('Internal server error', 500)
+    return apiError('Internal server error', 500)
   }
 
   try {
@@ -25,7 +26,7 @@ export async function GET() {
     return NextResponse.json(response)
   } catch (e) {
     console.error('Failed to list course materials:', e)
-    return err('Internal server error', 500)
+    return apiError('Internal server error', 500)
   }
 }
 
@@ -34,24 +35,24 @@ export async function POST(req: NextRequest) {
   try {
     session = await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     console.error('Unexpected error in requireInstructor:', e)
-    return err('Internal server error', 500)
+    return apiError('Internal server error', 500)
   }
 
   let body: CourseMaterialInput
   try {
     body = await req.json()
   } catch {
-    return err('Invalid JSON body', 400)
+    return apiError('Invalid JSON body', 400)
   }
 
   if (!body.title || body.title.length < 1 || body.title.length > 200) {
-    return err('title must be 1–200 characters', 400)
+    return apiError('title must be 1–200 characters', 400)
   }
   if (!body.content || body.content.length < 1 || body.content.length > 50000) {
-    return err('content must be 1–50,000 characters', 400)
+    return apiError('content must be 1–50,000 characters', 400)
   }
 
   try {
@@ -64,10 +65,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id }, { status: 201 })
   } catch (e) {
     console.error('Failed to create course material:', e)
-    return err('Internal server error', 500)
+    return apiError('Internal server error', 500)
   }
-}
-
-function err(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
 }

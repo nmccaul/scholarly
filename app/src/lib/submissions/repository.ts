@@ -32,6 +32,39 @@ type FollowUpExchangeRow = {
   answer_recording_url: string | null
 }
 
+type RawAiGradeRationale = {
+  criteria_scores: Array<{ label: string; score: number; rationale: string }>
+  overall_feedback: string
+} | null
+
+function toAiGradeRationale(raw: RawAiGradeRationale): AiGradeRationale | null {
+  if (!raw) return null
+  return {
+    criteriaScores: raw.criteria_scores.map((s) => ({
+      label: s.label,
+      score: s.score,
+      rationale: s.rationale,
+    })),
+    overallFeedback: raw.overall_feedback,
+  }
+}
+
+async function fetchFollowUpExchanges(
+  submissionId: SubmissionId,
+  db: ReturnType<typeof createServiceClient>
+): Promise<FollowUpExchangeRow[]> {
+  const { data, error } = await db
+    .from('oral_assessment_submissions')
+    .select('follow_up_exchanges')
+    .eq('submission_id', submissionId)
+    .single()
+  if (error) throw new Error(`Failed to fetch follow-up exchanges: ${error.message}`)
+  return (
+    (data as { follow_up_exchanges: FollowUpExchangeRow[] | null } | null)
+      ?.follow_up_exchanges ?? []
+  )
+}
+
 export async function findOrCreateSubmission(
   assignmentId: AssignmentId,
   studentId: UserId
@@ -132,16 +165,7 @@ export async function getSubmission(
       answerRecordingUrl: e.answer_recording_url,
     })),
     aiGrade: oral?.ai_grade ?? null,
-    aiGradeRationale: oral?.ai_grade_rationale
-      ? {
-          criteriaScores: oral.ai_grade_rationale.criteria_scores.map((s) => ({
-            label: s.label,
-            score: s.score,
-            rationale: s.rationale,
-          })),
-          overallFeedback: oral.ai_grade_rationale.overall_feedback,
-        }
-      : null,
+    aiGradeRationale: toAiGradeRationale(oral?.ai_grade_rationale ?? null),
     finalGrade: oral?.final_grade ?? null,
   }
 }
@@ -166,16 +190,7 @@ export async function updateTranscript(submissionId: SubmissionId, transcript: s
 
 export async function appendFollowUp(submissionId: SubmissionId, question: string): Promise<void> {
   const db = createServiceClient()
-  const { data, error: fetchError } = await db
-    .from('oral_assessment_submissions')
-    .select('follow_up_exchanges')
-    .eq('submission_id', submissionId)
-    .single()
-
-  if (fetchError) throw new Error(`Failed to fetch follow-up exchanges: ${fetchError.message}`)
-
-  const current = ((data as { follow_up_exchanges: FollowUpExchangeRow[] | null } | null)
-    ?.follow_up_exchanges ?? [])
+  const current = await fetchFollowUpExchanges(submissionId, db)
 
   const { error } = await db
     .from('oral_assessment_submissions')
@@ -196,16 +211,7 @@ export async function updateFollowUpAnswer(
   answerTranscript: string
 ): Promise<void> {
   const db = createServiceClient()
-  const { data, error: fetchError } = await db
-    .from('oral_assessment_submissions')
-    .select('follow_up_exchanges')
-    .eq('submission_id', submissionId)
-    .single()
-
-  if (fetchError) throw new Error(`Failed to fetch follow-up exchanges: ${fetchError.message}`)
-
-  const current = ((data as { follow_up_exchanges: FollowUpExchangeRow[] | null } | null)
-    ?.follow_up_exchanges ?? [])
+  const current = await fetchFollowUpExchanges(submissionId, db)
 
   if (index >= current.length) {
     throw new Error(`Follow-up index ${index} out of range (length: ${current.length})`)
@@ -420,16 +426,7 @@ export async function getSubmissionAsTeacher(
       answerTranscript: e.answer_transcript,
     })),
     aiGrade: oral?.ai_grade ?? null,
-    aiGradeRationale: oral?.ai_grade_rationale
-      ? {
-          criteriaScores: oral.ai_grade_rationale.criteria_scores.map((s) => ({
-            label: s.label,
-            score: s.score,
-            rationale: s.rationale,
-          })),
-          overallFeedback: oral.ai_grade_rationale.overall_feedback,
-        }
-      : null,
+    aiGradeRationale: toAiGradeRationale(oral?.ai_grade_rationale ?? null),
     finalGrade: oral?.final_grade ?? null,
     teacherFeedback: oral?.teacher_feedback ?? null,
     gradedAt: oral?.graded_at ?? null,
@@ -465,6 +462,18 @@ export async function overrideGrade(params: {
   if (subError) throw new Error(`Failed to update submission status after override: ${subError.message}`)
 }
 
+export async function setSubmissionStatus(
+  submissionId: SubmissionId,
+  status: SubmissionStatus
+): Promise<void> {
+  const db = createServiceClient()
+  const { error } = await db
+    .from('submissions')
+    .update({ status })
+    .eq('id', submissionId)
+  if (error) throw new Error(`Failed to set submission status: ${error.message}`)
+}
+
 export async function resetSubmission(submissionId: SubmissionId): Promise<void> {
   const db = createServiceClient()
 
@@ -488,6 +497,7 @@ export async function resetSubmission(submissionId: SubmissionId): Promise<void>
     .from('submissions')
     .update({ status: 'in_progress', submitted_at: null })
     .eq('id', submissionId)
+    .in('status', ['submitted', 'graded', 'error'])
 
   if (subError) throw new Error(`Failed to reset submission status: ${subError.message}`)
 }

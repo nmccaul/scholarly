@@ -164,12 +164,12 @@ export async function validateLtiJwt(
     context,
     custom,
     agsEndpoint: agsRaw,
-    nrpsEndpoint: nrpsRaw
-      ? { contextMembershipsUrl: nrpsRaw.context_memberships_url! }
+    nrpsEndpoint: nrpsRaw?.context_memberships_url
+      ? { contextMembershipsUrl: nrpsRaw.context_memberships_url }
       : undefined,
-    deepLinkingSettings: dlRaw
+    deepLinkingSettings: dlRaw?.deep_link_return_url
       ? {
-          deepLinkReturnUrl: dlRaw.deep_link_return_url!,
+          deepLinkReturnUrl: dlRaw.deep_link_return_url,
           acceptTypes: dlRaw.accept_types ?? [],
           data: dlRaw.data,
         }

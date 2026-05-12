@@ -5,3 +5,4 @@ import type { UserId, RegistrationId, CourseId } from '@/types/domain'
 export const DEMO_USER_ID = '00000000-0000-0000-0000-000000000002' as UserId
 export const DEMO_REGISTRATION_ID = '00000000-0000-0000-0000-000000000001' as RegistrationId
 export const DEMO_COURSE_ID = '00000000-0000-0000-0000-000000000003' as CourseId
+export const DEMO_DEPLOYMENT_ID = 'demo-deployment'

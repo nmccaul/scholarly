@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
+import { apiError } from '@/lib/api/response'
 
 const MAX_HTML_BYTES = 2 * 1024 * 1024
 
@@ -69,8 +70,8 @@ export async function POST(req: NextRequest) {
   try {
     await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     throw e
   }
 
@@ -78,20 +79,20 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return err('Invalid JSON body', 400)
+    return apiError('Invalid JSON body', 400)
   }
 
   const urlStr = (body.url ?? '').trim()
-  if (!urlStr) return err('url is required', 400)
+  if (!urlStr) return apiError('url is required', 400)
 
   let parsed: URL
   try {
     parsed = new URL(urlStr)
   } catch {
-    return err('Invalid URL', 400)
+    return apiError('Invalid URL', 400)
   }
 
-  if (isSsrfTarget(urlStr)) return err('URL not allowed', 400)
+  if (isSsrfTarget(urlStr)) return apiError('URL not allowed', 400)
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 15000)
@@ -104,34 +105,31 @@ export async function POST(req: NextRequest) {
       signal: controller.signal,
     })
   } catch {
-    return err('Could not reach that URL. Check the address and try again.', 422)
+    return apiError('Could not reach that URL. Check the address and try again.', 422)
   } finally {
     clearTimeout(timeout)
   }
 
   // Treat any redirect as an error — we don't follow them
   if (res.status >= 300 && res.status < 400) {
-    return err('That URL redirects to another address, which is not supported. Try the final destination URL directly.', 422)
+    return apiError('That URL redirects to another address, which is not supported. Try the final destination URL directly.', 422)
   }
 
-  if (!res.ok) return err(`URL returned ${res.status}. Make sure the page is publicly accessible.`, 422)
+  if (!res.ok) return apiError(`URL returned ${res.status}. Make sure the page is publicly accessible.`, 422)
 
   const rawContentType = res.headers.get('content-type') ?? ''
   const mime = rawContentType.split(';')[0].trim().toLowerCase()
   if (mime !== 'text/html' && mime !== 'text/plain') {
-    return err('URL must point to a web page. To add a PDF, use the PDF option instead.', 422)
+    return apiError('URL must point to a web page. To add a PDF, use the PDF option instead.', 422)
   }
 
   const html = (await res.text()).slice(0, MAX_HTML_BYTES)
   const { title, content } = extractFromHtml(html, parsed.hostname)
 
   if (content.length < 50) {
-    return err('Not enough readable text found on that page.', 422)
+    return apiError('Not enough readable text found on that page.', 422)
   }
 
   return NextResponse.json({ title, content })
 }
 
-function err(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
-}

@@ -4,6 +4,7 @@ import { getSubmissionAsTeacher, overrideGrade } from '@/lib/submissions/reposit
 import { findAssignmentWithConfig } from '@/lib/assignments/repository'
 import { findRegistrationById } from '@/lib/lti/registrations'
 import { syncGradeToCanvas } from '@/lib/lti/grade-sync'
+import { apiError } from '@/lib/api/response'
 import type { SubmissionId } from '@/types/domain'
 import type { GradeOverrideRequest, GradeOverrideResponse } from '@/types/api'
 
@@ -15,8 +16,8 @@ export async function PATCH(
   try {
     session = await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     throw e
   }
 
@@ -24,22 +25,22 @@ export async function PATCH(
   try {
     body = await req.json()
   } catch {
-    return err('Invalid JSON body', 400)
+    return apiError('Invalid JSON body', 400)
   }
 
   if (!Number.isFinite(body.finalGrade) || body.finalGrade < 0) {
-    return err('finalGrade must be a non-negative number', 400)
+    return apiError('finalGrade must be a non-negative number', 400)
   }
 
   const { id } = await params
   const submission = await getSubmissionAsTeacher(id as SubmissionId)
-  if (!submission) return err('Submission not found', 404)
+  if (!submission) return apiError('Submission not found', 404)
 
   const assignment = await findAssignmentWithConfig(submission.assignmentId)
-  if (!assignment || assignment.courseId !== session.courseId) return err('Assignment not found', 404)
+  if (!assignment || assignment.courseId !== session.courseId) return apiError('Assignment not found', 404)
 
   if (body.finalGrade > assignment.pointsPossible) {
-    return err(`finalGrade cannot exceed pointsPossible (${assignment.pointsPossible})`, 400)
+    return apiError(`finalGrade cannot exceed pointsPossible (${assignment.pointsPossible})`, 400)
   }
 
   const teacherFeedback = body.teacherFeedback?.trim() ?? null
@@ -74,8 +75,4 @@ export async function PATCH(
     syncStatus,
   }
   return NextResponse.json(response)
-}
-
-function err(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
 }

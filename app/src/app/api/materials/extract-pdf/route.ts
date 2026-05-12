@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
+import { apiError } from '@/lib/api/response'
 import { PDFParse } from 'pdf-parse'
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024
@@ -8,28 +9,28 @@ export async function POST(req: NextRequest) {
   try {
     await requireInstructor()
   } catch (e) {
-    if (e instanceof SessionError) return err(e.message, 401)
-    if (e instanceof ForbiddenError) return err(e.message, 403)
+    if (e instanceof SessionError) return apiError(e.message, 401)
+    if (e instanceof ForbiddenError) return apiError(e.message, 403)
     console.error('Unexpected error in requireInstructor:', e)
-    return err('Internal server error', 500)
+    return apiError('Internal server error', 500)
   }
 
   let formData: FormData
   try {
     formData = await req.formData()
   } catch {
-    return err('Invalid form data', 400)
+    return apiError('Invalid form data', 400)
   }
 
   const file = formData.get('file')
-  if (!(file instanceof File)) return err('No file provided', 400)
+  if (!(file instanceof File)) return apiError('No file provided', 400)
 
   if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-    return err('File must be a PDF', 400)
+    return apiError('File must be a PDF', 400)
   }
 
   if (file.size > MAX_PDF_BYTES) {
-    return err('PDF must be under 5 MB', 400)
+    return apiError('PDF must be under 5 MB', 400)
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     text = result.text
   } catch (e) {
     console.error('pdf-parse failed:', e)
-    return err('Could not read that PDF. It may be encrypted or corrupted.', 422)
+    return apiError('Could not read that PDF. It may be encrypted or corrupted.', 422)
   }
 
   const content = text
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     .slice(0, 50000)
 
   if (content.length < 10) {
-    return err('No readable text found. This PDF may contain only scanned images.', 422)
+    return apiError('No readable text found. This PDF may contain only scanned images.', 422)
   }
 
   const title = file.name
@@ -66,6 +67,3 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ title, content })
 }
 
-function err(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status })
-}
