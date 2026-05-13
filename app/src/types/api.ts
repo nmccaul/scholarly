@@ -1,4 +1,4 @@
-import type { AssignmentId, SubmissionId, AssignmentType, AssignmentStatus, CourseId, AiGradeRationale, CourseMaterialId } from './domain'
+import type { AssignmentId, SubmissionId, AssignmentType, AssignmentStatus, CourseId, AiGradeRationale, CourseMaterialId, CheckpointConversationTurn } from './domain'
 
 export interface RubricCriterionInput {
   label: string
@@ -78,8 +78,9 @@ export interface AssignmentConfigResponse {
 
 export interface CreateSubmissionResponse {
   submissionId: SubmissionId
-  uploadUrl: string   // Supabase Storage signed upload URL for the main recording
+  uploadUrl: string
   alreadySubmitted?: boolean
+  currentSectionIndex?: number  // reading assignments only — enables resume on re-launch
 }
 
 // Intentionally empty — server derives question index from DB state.
@@ -115,6 +116,68 @@ export interface GenerateAssignmentResponse {
   title: string
   prompt: string
   rubric: RubricCriterionInput[]
+}
+
+// ─── Reading assignment builder ───────────────────────────────────────────────
+
+export interface CreateReadingAssessmentRequest {
+  title: string
+  sections: Array<{ title: string; content: string }>
+  checkpointType: 'text' | 'voice'
+  maxFollowUps: number
+  aiGradingEnabled: boolean
+  rubric: RubricCriterionInput[]
+  returnUrl: string
+  dlData?: string
+}
+
+export interface UpdateReadingAssessmentRequest {
+  title: string
+  sections: Array<{ title: string; content: string }>
+  checkpointType: 'text' | 'voice'
+  maxFollowUps: number
+  aiGradingEnabled: boolean
+  rubric: RubricCriterionInput[]
+}
+
+export interface GenerateReadingAssignmentRequest {
+  materialIds: string[]
+  assignmentMaterials: CourseMaterialInput[]
+  direction: string
+}
+
+export interface GenerateReadingAssignmentResponse {
+  title: string
+  sections: Array<{ title: string; content: string }>
+  rubric: RubricCriterionInput[]
+}
+
+// ─── Reading checkpoint (text mode) ──────────────────────────────────────────
+
+export interface CheckpointEvaluationResponse {
+  passed: boolean
+  forceUnlocked: boolean
+  feedbackMessage: string
+  nextQuestion: string | null   // null when passed or force-unlocked
+  followUpIndex: number | null
+}
+
+// ─── Reading checkpoint (voice mode) ─────────────────────────────────────────
+
+export interface RealtimeSessionResponse {
+  clientSecret: string  // session.client_secret.value — short-lived, browser-only
+}
+
+export interface CompleteCheckpointRequest {
+  conversation: CheckpointConversationTurn[]
+  passed: boolean
+  aiFeedback: string
+}
+
+export interface CompleteCheckpointResponse {
+  nextSectionUnlocked: boolean
+  newSectionIndex: number
+  totalSections: number
 }
 
 // ─── Grade override ───────────────────────────────────────────────────────────

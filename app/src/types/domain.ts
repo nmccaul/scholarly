@@ -9,7 +9,11 @@ export type CourseMaterialId = string & { readonly _brand: 'CourseMaterialId' }
 
 export type UserRole = 'instructor' | 'learner'
 
-export type AssignmentType = 'oral_assessment'
+export type AssignmentType = 'oral_assessment' | 'reading_assessment'
+
+export type CheckpointType = 'text' | 'voice'
+
+export type CheckpointStatus = 'locked' | 'in_progress' | 'passed' | 'force_unlocked'
 
 export type AssignmentStatus = 'draft' | 'published' | 'archived'
 
@@ -49,6 +53,37 @@ export interface RubricCriterion {
   label: string
   description: string
   maxPoints: number
+}
+
+export interface ReadingSection {
+  title: string
+  content: string
+}
+
+export interface CheckpointConversationTurn {
+  role: 'student' | 'ai'
+  text: string
+}
+
+export interface ReadingCheckpoint {
+  id: string
+  submissionId: SubmissionId
+  sectionIndex: number
+  conversation: CheckpointConversationTurn[]
+  status: CheckpointStatus
+  startedAt: string | null
+  passedAt: string | null
+  followUpCount: number
+  aiFeedback: string | null
+}
+
+export interface ReadingAssignmentConfig {
+  assignmentId: AssignmentId
+  sections: ReadingSection[]
+  checkpointType: CheckpointType
+  maxFollowUps: number
+  aiGradingEnabled: boolean
+  rubric: RubricCriterion[]
 }
 
 export interface OralAssessmentConfig {

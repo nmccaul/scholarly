@@ -1,5 +1,5 @@
 import { requireSession, SessionError } from '@/lib/lti/session'
-import { findAssignmentWithConfig } from '@/lib/assignments/repository'
+import { findAssignmentWithConfig, findReadingAssignmentWithConfig } from '@/lib/assignments/repository'
 import AssessmentClient, { type ClientAssignment } from './AssessmentClient'
 import type { AssignmentId } from '@/types/domain'
 
@@ -26,9 +26,37 @@ export default async function AssessPage({
     throw e
   }
 
-  const assignment = await findAssignmentWithConfig(assignmentId as AssignmentId)
-  // 404 on missing or wrong course — don't leak cross-course existence
-  if (!assignment || assignment.courseId !== session.courseId) {
+  // Try oral assignment first
+  const oralAssignment = await findAssignmentWithConfig(assignmentId as AssignmentId)
+  if (oralAssignment) {
+    if (oralAssignment.courseId !== session.courseId) {
+      return (
+        <div className="flex items-center justify-center min-h-screen p-8">
+          <p className="text-gray-600">Assignment not found.</p>
+        </div>
+      )
+    }
+
+    const clientAssignment: ClientAssignment = {
+      type: 'oral_assessment',
+      id: oralAssignment.id,
+      title: oralAssignment.title,
+      pointsPossible: oralAssignment.pointsPossible,
+      config: {
+        prompt: oralAssignment.config.prompt,
+        preparationTimeSeconds: oralAssignment.config.preparationTimeSeconds,
+        maxResponseTimeSeconds: oralAssignment.config.maxResponseTimeSeconds,
+        followUpQuestionCount: oralAssignment.config.followUpQuestionCount,
+        cameraRequired: oralAssignment.config.cameraRequired,
+      },
+    }
+
+    return <AssessmentClient assignment={clientAssignment} isInstructor={session.role === 'instructor'} />
+  }
+
+  // Try reading assignment
+  const readingAssignment = await findReadingAssignmentWithConfig(assignmentId as AssignmentId)
+  if (!readingAssignment || readingAssignment.courseId !== session.courseId) {
     return (
       <div className="flex items-center justify-center min-h-screen p-8">
         <p className="text-gray-600">Assignment not found.</p>
@@ -36,17 +64,17 @@ export default async function AssessPage({
     )
   }
 
-  // Strip server-only fields (ltiLineitemUrl, courseId, status) before passing to client bundle
   const clientAssignment: ClientAssignment = {
-    id: assignment.id,
-    title: assignment.title,
-    pointsPossible: assignment.pointsPossible,
+    type: 'reading_assessment',
+    id: readingAssignment.id,
+    title: readingAssignment.title,
+    pointsPossible: readingAssignment.pointsPossible,
     config: {
-      prompt: assignment.config.prompt,
-      preparationTimeSeconds: assignment.config.preparationTimeSeconds,
-      maxResponseTimeSeconds: assignment.config.maxResponseTimeSeconds,
-      followUpQuestionCount: assignment.config.followUpQuestionCount,
-      cameraRequired: assignment.config.cameraRequired,
+      sections: readingAssignment.config.sections,
+      checkpointType: readingAssignment.config.checkpointType,
+      maxFollowUps: readingAssignment.config.maxFollowUps,
+      aiGradingEnabled: readingAssignment.config.aiGradingEnabled,
+      rubric: readingAssignment.config.rubric,
     },
   }
 

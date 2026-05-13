@@ -1,10 +1,15 @@
 import Link from 'next/link'
 import { requireInstructor, SessionError } from '@/lib/lti/session'
-import { findAssignmentWithConfig } from '@/lib/assignments/repository'
+import { findAssignmentWithConfig, findReadingAssignmentWithConfig } from '@/lib/assignments/repository'
 import { listSubmissionsForAssignment } from '@/lib/submissions/repository'
-import type { AssignmentId } from '@/types/domain'
+import { listReadingSubmissionsForAssignment } from '@/lib/reading/repository'
+import type { AssignmentId, AssignmentType } from '@/types/domain'
 
 export const dynamic = 'force-dynamic'
+
+function typeLabel(type: AssignmentType) {
+  return type === 'reading_assessment' ? 'Checkpoint Reading' : 'Oral Assessment'
+}
 
 export default async function DashboardPage({
   params,
@@ -23,12 +28,20 @@ export default async function DashboardPage({
     throw e
   }
 
-  const assignment = await findAssignmentWithConfig(assignmentId as AssignmentId)
+  // Try oral assignment first, then reading
+  const oralAssignment = await findAssignmentWithConfig(assignmentId as AssignmentId)
+  const readingAssignment = oralAssignment
+    ? null
+    : await findReadingAssignmentWithConfig(assignmentId as AssignmentId)
+
+  const assignment = oralAssignment ?? readingAssignment
   if (!assignment || assignment.courseId !== session.courseId) {
     return <ErrorPage message="Assignment not found." />
   }
 
-  const submissions = await listSubmissionsForAssignment(assignment.id)
+  const submissions = assignment.type === 'reading_assessment'
+    ? await listReadingSubmissionsForAssignment(assignment.id)
+    : await listSubmissionsForAssignment(assignment.id)
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
@@ -36,7 +49,7 @@ export default async function DashboardPage({
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <div className="font-mono text-[11px] font-medium text-[#6B7280] uppercase tracking-widest mb-2">
-              Oral Assessment
+              {typeLabel(assignment.type)}
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-[#18202A]">{assignment.title}</h1>
             <div className="text-sm text-[#6B7280] mt-1">

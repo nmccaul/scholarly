@@ -8,6 +8,7 @@ interface AssignmentType {
   label: string
   description: string
   available: boolean
+  route?: string  // relative path under /builder/new/, defaults to '' (oral)
 }
 
 interface AiRole {
@@ -50,10 +51,11 @@ const AI_ROLES: AiRole[] = [
     definition: 'AI prompts metacognition — helping students reflect on their process, regulate their thinking, and improve their approach.',
     types: [
       {
-        id: 'peer_review_sim',
-        label: 'Peer Review Simulation',
-        description: 'AI plays the role of a peer submitting work for the student to review and critique.',
-        available: false,
+        id: 'reading_assessment',
+        label: 'Checkpoint Reading',
+        description: 'Students read section by section; a hard gate requires critical engagement before the next section unlocks. Defeats AI summarization by requiring analysis, not summary.',
+        available: true,
+        route: 'reading',
       },
     ],
   },
@@ -144,6 +146,13 @@ function AssignmentIcon({ id, className }: { id: string; className?: string }) {
           <line x1="9" y1="22" x2="15" y2="22" />
         </svg>
       )
+    case 'reading_assessment':
+      return (
+        <svg {...props}>
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+        </svg>
+      )
     case 'socratic_seminar':
       return (
         <svg {...props}>
@@ -213,11 +222,12 @@ export default function TypePickerClient({
   const [requested, setRequested] = useState<Set<string>>(new Set(initialRequested))
   const [loading, setLoading] = useState<Record<string, 'requesting' | 'unrequesting'>>({})
 
-  function buildOralAssessmentUrl() {
-    if (isDemo) return '/builder/new'
+  function buildAssignmentUrl(route?: string) {
+    const base = route ? `/builder/new/${route}` : '/builder/new'
+    if (isDemo) return base
     const params = new URLSearchParams({ return_url: returnUrl })
     if (dlData) params.set('dl_data', dlData)
-    return `/builder/new?${params.toString()}`
+    return `${base}?${params.toString()}`
   }
 
   async function handleRequest(typeId: string) {
@@ -310,7 +320,7 @@ export default function TypePickerClient({
                           <p className="text-xs text-[#6B7280] leading-relaxed">{type.description}</p>
                         </div>
                         <button
-                          onClick={() => router.push(buildOralAssessmentUrl())}
+                          onClick={() => router.push(buildAssignmentUrl(type.route))}
                           className="w-full py-2 text-sm font-semibold text-white bg-[#2563A6] rounded-md hover:bg-[#1E518B] transition-colors"
                         >
                           Create

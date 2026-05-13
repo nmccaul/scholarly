@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, SessionError } from '@/lib/lti/session'
-import { findAssignmentWithConfig } from '@/lib/assignments/repository'
+import { findAssignmentWithConfig, findReadingAssignmentWithConfig } from '@/lib/assignments/repository'
 import { findOrCreateSubmission } from '@/lib/submissions/repository'
+import { findOrCreateReadingSubmission } from '@/lib/reading/repository'
 import { createSignedUploadUrl, responseRecordingPath } from '@/lib/storage/recordings'
 import { apiError } from '@/lib/api/response'
 import type { AssignmentId } from '@/types/domain'
@@ -25,24 +26,53 @@ export async function POST(req: NextRequest) {
 
   if (!body.assignmentId) return apiError('assignmentId is required', 400)
 
-  const assignment = await findAssignmentWithConfig(body.assignmentId as AssignmentId)
-  // 404 on missing, wrong course, or non-published — don't leak draft existence
-  if (!assignment || assignment.courseId !== session.courseId) return apiError('Assignment not found', 404)
-  if (assignment.status !== 'published') return apiError('Assignment not found', 404)
+  // Try oral assessment first, then reading assessment
+  const oralAssignment = await findAssignmentWithConfig(body.assignmentId as AssignmentId)
 
-  const { submissionId, alreadySubmitted } = await findOrCreateSubmission(
-    assignment.id,
-    session.userId
-  )
+  if (oralAssignment) {
+    if (oralAssignment.courseId !== session.courseId) return apiError('Assignment not found', 404)
+    if (oralAssignment.status !== 'published') return apiError('Assignment not found', 404)
+
+    const { submissionId, alreadySubmitted } = await findOrCreateSubmission(
+      oralAssignment.id,
+      session.userId
+    )
+
+    if (alreadySubmitted) {
+      const response: CreateSubmissionResponse = { submissionId, uploadUrl: '', alreadySubmitted: true }
+      return NextResponse.json(response, { status: 200 })
+    }
+
+    const storagePath = responseRecordingPath(session.registrationId, oralAssignment.id, submissionId)
+    const uploadUrl = await createSignedUploadUrl(storagePath)
+
+    const response: CreateSubmissionResponse = { submissionId, uploadUrl }
+    return NextResponse.json(response, { status: 201 })
+  }
+
+  const readingAssignment = await findReadingAssignmentWithConfig(body.assignmentId as AssignmentId)
+  if (!readingAssignment || readingAssignment.courseId !== session.courseId) {
+    return apiError('Assignment not found', 404)
+  }
+  if (readingAssignment.status !== 'published') return apiError('Assignment not found', 404)
+
+  const { submissionId, alreadySubmitted, currentSectionIndex } =
+    await findOrCreateReadingSubmission(
+      readingAssignment.id,
+      session.userId,
+      readingAssignment.config.sections.length
+    )
 
   if (alreadySubmitted) {
-    const response: CreateSubmissionResponse = { submissionId, uploadUrl: '', alreadySubmitted: true }
+    const response: CreateSubmissionResponse = {
+      submissionId,
+      uploadUrl: '',
+      alreadySubmitted: true,
+      currentSectionIndex,
+    }
     return NextResponse.json(response, { status: 200 })
   }
 
-  const storagePath = responseRecordingPath(session.registrationId, assignment.id, submissionId)
-  const uploadUrl = await createSignedUploadUrl(storagePath)
-
-  const response: CreateSubmissionResponse = { submissionId, uploadUrl }
+  const response: CreateSubmissionResponse = { submissionId, uploadUrl: '', currentSectionIndex }
   return NextResponse.json(response, { status: 201 })
 }

@@ -66,7 +66,9 @@ export default async function DashboardHomePage() {
                   <tr key={a.id} className="hover:bg-[#FAF9F6]">
                     <td className="px-5 py-4">
                       <div className="font-medium text-[#18202A]">{a.title}</div>
-                      <div className="mt-1 font-mono text-[11px] uppercase tracking-wider text-[#8A8F98]">Oral Assessment</div>
+                      <div className="mt-1 font-mono text-[11px] uppercase tracking-wider text-[#8A8F98]">
+                        {a.type === 'reading_assessment' ? 'Checkpoint Reading' : 'Oral Assessment'}
+                      </div>
                     </td>
                     <td className="px-5 py-4 text-right font-mono text-xs tabular-nums text-[#374151]">
                       {a.pointsPossible}

@@ -9,21 +9,38 @@ import { RecordScreen } from './screens/RecordScreen'
 import { FollowUpScreen } from './screens/FollowUpScreen'
 import { ReviewScreen } from './screens/ReviewScreen'
 import { ResultScreen } from './screens/ResultScreen'
-import type { AssignmentId } from '@/types/domain'
+import ReadingAssessmentClient from './ReadingAssessmentClient'
+import type { AssignmentId, CheckpointType, ReadingSection, RubricCriterion } from '@/types/domain'
 
-// Only the fields the client actually needs — sensitive server fields are stripped in page.tsx
-export interface ClientAssignment {
-  id: AssignmentId
-  title: string
-  pointsPossible: number
-  config: {
-    prompt: string
-    preparationTimeSeconds: number
-    maxResponseTimeSeconds: number
-    followUpQuestionCount: number
-    cameraRequired: boolean
-  }
-}
+// ─── Discriminated union — server strips sensitive fields before passing to client ──
+
+export type ClientAssignment =
+  | {
+      type: 'oral_assessment'
+      id: AssignmentId
+      title: string
+      pointsPossible: number
+      config: {
+        prompt: string
+        preparationTimeSeconds: number
+        maxResponseTimeSeconds: number
+        followUpQuestionCount: number
+        cameraRequired: boolean
+      }
+    }
+  | {
+      type: 'reading_assessment'
+      id: AssignmentId
+      title: string
+      pointsPossible: number
+      config: {
+        sections: ReadingSection[]
+        checkpointType: CheckpointType
+        maxFollowUps: number
+        aiGradingEnabled: boolean
+        rubric: RubricCriterion[]
+      }
+    }
 
 export default function AssessmentClient({
   assignment,
@@ -31,6 +48,20 @@ export default function AssessmentClient({
 }: {
   assignment: ClientAssignment
   isInstructor?: boolean
+}) {
+  if (assignment.type === 'reading_assessment') {
+    return <ReadingAssessmentClient assignment={assignment} isInstructor={isInstructor} />
+  }
+
+  return <OralAssessmentClient assignment={assignment} isInstructor={isInstructor} />
+}
+
+function OralAssessmentClient({
+  assignment,
+  isInstructor,
+}: {
+  assignment: Extract<ClientAssignment, { type: 'oral_assessment' }>
+  isInstructor: boolean
 }) {
   const state = useAssessment(assignment.id, assignment.config)
 
