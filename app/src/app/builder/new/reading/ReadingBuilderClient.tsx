@@ -10,15 +10,6 @@ import type {
   GenerateReadingAssignmentResponse,
 } from '@/types/api'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface SectionDraft {
-  title: string
-  content: string
-  sourceType: 'text' | 'pdf'
-  pdfStoragePath?: string
-}
-
 interface AssignmentMaterialDraft {
   title: string
   content: string
@@ -26,7 +17,6 @@ interface AssignmentMaterialDraft {
 
 interface FormState {
   title: string
-  sections: SectionDraft[]
   checkpointType: 'text' | 'voice'
   maxFollowUps: number
   aiGradingEnabled: boolean
@@ -35,18 +25,20 @@ interface FormState {
   assignmentMaterials: AssignmentMaterialDraft[]
 }
 
+interface GeneratedSections {
+  sections: GenerateReadingAssignmentResponse['sections']
+  count: number
+}
+
 const DEFAULT_FORM: FormState = {
   title: '',
-  sections: [{ title: '', content: '', sourceType: 'text' }],
-  checkpointType: 'text',
+  checkpointType: 'voice',
   maxFollowUps: 3,
   aiGradingEnabled: true,
   rubric: [{ label: '', description: '', maxPoints: 10 }],
   selectedMaterialIds: [],
   assignmentMaterials: [],
 }
-
-// ─── Main component ───────────────────────────────────────────────────────────
 
 export function ReadingBuilderClient({
   returnUrl,
@@ -70,11 +62,10 @@ export function ReadingBuilderClient({
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
+  // Sections are generated silently — not shown for editing
+  const [generatedSections, setGeneratedSections] = useState<GeneratedSections | null>(null)
 
-  const canGenerate =
-    !generating &&
-    (form.selectedMaterialIds.length > 0 || form.assignmentMaterials.length > 0)
-
+  const canGenerate = !generating && (form.selectedMaterialIds.length > 0 || form.assignmentMaterials.length > 0)
   const totalPoints = form.rubric.reduce((sum, c) => sum + (c.maxPoints || 0), 0)
 
   async function handleGenerate() {
@@ -92,12 +83,9 @@ export function ReadingBuilderClient({
       })
       const data = await res.json().catch(() => ({})) as GenerateReadingAssignmentResponse & { error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Generation failed')
-      setForm((f) => ({
-        ...f,
-        title: data.title,
-        sections: data.sections.map((s) => ({ ...s, sourceType: s.sourceType ?? ('text' as const) })),
-        rubric: data.rubric,
-      }))
+
+      setForm((f) => ({ ...f, title: data.title, rubric: data.rubric }))
+      setGeneratedSections({ sections: data.sections, count: data.sections.length })
       setErrors({})
       setGenerated(true)
     } catch (e) {
@@ -107,31 +95,11 @@ export function ReadingBuilderClient({
     }
   }
 
-  function updateSection(index: number, field: keyof SectionDraft, value: string) {
+  function updateCriterion(index: number, field: keyof RubricCriterionInput, value: string | number) {
     setForm((prev) => ({
       ...prev,
-      sections: prev.sections.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
+      rubric: prev.rubric.map((c, i) => (i === index ? { ...c, [field]: value } : c)),
     }))
-  }
-
-  function addSection() {
-    if (form.sections.length >= 20) return
-    setForm((prev) => ({ ...prev, sections: [...prev.sections, { title: '', content: '', sourceType: 'text' }] }))
-  }
-
-  function removeSection(index: number) {
-    if (form.sections.length <= 1) return
-    setForm((prev) => ({ ...prev, sections: prev.sections.filter((_, i) => i !== index) }))
-  }
-
-  function moveSection(index: number, direction: -1 | 1) {
-    const target = index + direction
-    if (target < 0 || target >= form.sections.length) return
-    setForm((prev) => {
-      const next = [...prev.sections]
-      ;[next[index], next[target]] = [next[target]!, next[index]!]
-      return { ...prev, sections: next }
-    })
   }
 
   function addCriterion() {
@@ -144,22 +112,11 @@ export function ReadingBuilderClient({
     setForm((prev) => ({ ...prev, rubric: prev.rubric.filter((_, i) => i !== index) }))
   }
 
-  function updateCriterion(index: number, field: keyof RubricCriterionInput, value: string | number) {
-    setForm((prev) => ({
-      ...prev,
-      rubric: prev.rubric.map((c, i) => (i === index ? { ...c, [field]: value } : c)),
-    }))
-  }
-
   function clientValidate(): boolean {
     const next: Partial<Record<string, string>> = {}
     if (!form.title.trim()) next.title = 'Required'
     else if (form.title.length > 200) next.title = 'Max 200 characters'
-    if (form.sections.length < 1) next.sections = 'At least 1 section required'
-    form.sections.forEach((s, i) => {
-      if (!s.title.trim()) next[`section_${i}_title`] = 'Required'
-      if (s.sourceType !== 'pdf' && !s.content.trim()) next[`section_${i}_content`] = 'Required'
-    })
+    if (!generatedSections) next.sections = 'Click "Generate" first to create sections from your material'
     form.rubric.forEach((c, i) => {
       if (!c.label.trim()) next[`rubric_${i}_label`] = 'Required'
       if (!c.description.trim()) next[`rubric_${i}_description`] = 'Required'
@@ -178,9 +135,9 @@ export function ReadingBuilderClient({
     try {
       const body: CreateReadingAssessmentRequest = {
         title: form.title.trim(),
-        sections: form.sections.map((s) => ({
-          title: s.title.trim(),
-          content: s.content.trim(),
+        sections: generatedSections!.sections.map((s) => ({
+          title: s.title,
+          content: s.content,
           ...(s.sourceType === 'pdf' ? { sourceType: 'pdf' as const, pdfStoragePath: s.pdfStoragePath } : {}),
         })),
         checkpointType: form.checkpointType,
@@ -196,21 +153,16 @@ export function ReadingBuilderClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
+      const data = await res.json().catch(() => ({})) as CreateAssignmentResponse & { error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'Something went wrong. Please try again.')
 
-      if (!res.ok) {
-        const data = await res.json()
-        setApiError(data.error ?? 'Something went wrong. Please try again.')
-        return
-      }
-
-      const data: CreateAssignmentResponse = await res.json()
       if (isDevMode) {
         setCreatedAssignmentId(data.assignmentId)
       } else {
         returnToCanvas(data.jwt, data.returnUrl)
       }
-    } catch {
-      setApiError('Network error. Please try again.')
+    } catch (e) {
+      setApiError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -235,22 +187,13 @@ export function ReadingBuilderClient({
           <p className="text-sm text-[#6B7280] mb-1">Dev mode — Canvas redirect skipped.</p>
           <p className="text-xs text-[#8A8F98] font-mono mb-6 break-all">{createdAssignmentId}</p>
           <div className="flex flex-col gap-2">
-            <a
-              href={`/assess/${createdAssignmentId}`}
-              className="block w-full rounded-lg bg-[#2563A6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E518B] transition-colors"
-            >
+            <a href={`/assess/${createdAssignmentId}`} className="block w-full rounded-lg bg-[#2563A6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E518B] transition-colors">
               Preview as Student
             </a>
-            <a
-              href={`/dashboard/${createdAssignmentId}`}
-              className="block w-full rounded-lg border border-[#E3E0D8] px-4 py-2.5 text-sm font-semibold text-[#374151] hover:bg-[#FAF9F6] transition-colors"
-            >
+            <a href={`/dashboard/${createdAssignmentId}`} className="block w-full rounded-lg border border-[#E3E0D8] px-4 py-2.5 text-sm font-semibold text-[#374151] hover:bg-[#FAF9F6] transition-colors">
               View Submissions
             </a>
-            <Link
-              href="/dashboard"
-              className="block w-full rounded-lg border border-[#E3E0D8] px-4 py-2.5 text-sm font-semibold text-[#374151] hover:bg-[#FAF9F6] transition-colors"
-            >
+            <Link href="/dashboard" className="block w-full rounded-lg border border-[#E3E0D8] px-4 py-2.5 text-sm font-semibold text-[#374151] hover:bg-[#FAF9F6] transition-colors">
               All Assignments
             </Link>
           </div>
@@ -262,12 +205,10 @@ export function ReadingBuilderClient({
   return (
     <div className="px-8 py-8">
       <div className="max-w-6xl">
+
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-          <button
-            onClick={backToTypePicker}
-            className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#18202A] transition-colors"
-          >
+          <button onClick={backToTypePicker} className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#18202A] transition-colors">
             <span>←</span>
             <span>Back</span>
           </button>
@@ -279,24 +220,23 @@ export function ReadingBuilderClient({
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
+
           {/* Generate with AI */}
           <div className="mb-6 overflow-hidden rounded-lg border border-[#D4CEC3] bg-white">
             <div className="border-b border-[#E3E0D8] bg-[#24313F] px-6 py-3">
               <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-[#7DB7D9] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <h2 className="font-mono text-[11px] font-medium uppercase tracking-widest text-white">Generate sections with AI</h2>
+                <BoltIcon className="w-4 h-4 text-[#7DB7D9] shrink-0" />
+                <h2 className="font-mono text-[11px] font-medium uppercase tracking-widest text-white">Generate with AI</h2>
               </div>
             </div>
 
             <div className="p-6">
               {courseMaterials.length > 0 && (
                 <div className="mb-4">
-                  <p className="mb-2 text-xs font-medium text-[#6B7280]">Select materials to divide into sections</p>
+                  <p className="mb-2 text-xs font-medium text-[#6B7280]">Select reading material</p>
                   <div className="space-y-2">
                     {courseMaterials.map((m) => (
-                      <label key={m.id} className="flex cursor-pointer items-start gap-3">
+                      <label key={m.id} className="flex cursor-pointer items-center gap-3">
                         <input
                           type="checkbox"
                           checked={form.selectedMaterialIds.includes(m.id)}
@@ -308,7 +248,7 @@ export function ReadingBuilderClient({
                                 : f.selectedMaterialIds.filter((id) => id !== m.id),
                             }))
                           }
-                          className="mt-0.5 h-4 w-4 rounded border-[#D4CEC3] text-[#18202A] focus:ring-[#2563A6]"
+                          className="h-4 w-4 rounded border-[#D4CEC3] text-[#2563A6] focus:ring-[#2563A6]"
                         />
                         <span className="flex items-center gap-2 text-sm text-[#374151]">
                           {m.title}
@@ -331,17 +271,10 @@ export function ReadingBuilderClient({
                         <span className="text-sm text-[#374151]">{m.title}</span>
                         <button
                           type="button"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              assignmentMaterials: prev.assignmentMaterials.filter((_, j) => j !== i),
-                            }))
-                          }
+                          onClick={() => setForm((prev) => ({ ...prev, assignmentMaterials: prev.assignmentMaterials.filter((_, j) => j !== i) }))}
                           className="text-[#8A8F98] hover:text-[#C2413A] transition-colors text-lg leading-none"
                           aria-label="Remove"
-                        >
-                          ×
-                        </button>
+                        >×</button>
                       </div>
                     ))}
                   </div>
@@ -351,21 +284,11 @@ export function ReadingBuilderClient({
               <div className="mb-4">
                 {addingMaterial ? (
                   <InlineMaterialForm
-                    onAdd={(m) => {
-                      setForm((prev) => ({
-                        ...prev,
-                        assignmentMaterials: [...prev.assignmentMaterials, m],
-                      }))
-                      setAddingMaterial(false)
-                    }}
+                    onAdd={(m) => { setForm((prev) => ({ ...prev, assignmentMaterials: [...prev.assignmentMaterials, m] })); setAddingMaterial(false) }}
                     onCancel={() => setAddingMaterial(false)}
                   />
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setAddingMaterial(true)}
-                    className="flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors"
-                  >
+                  <button type="button" onClick={() => setAddingMaterial(true)} className="flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors">
                     <span className="text-base leading-none">+</span>
                     Upload reading material
                   </button>
@@ -397,32 +320,59 @@ export function ReadingBuilderClient({
               </div>
 
               {generateError && <p className="mb-3 text-sm text-[#C2413A]">{generateError}</p>}
+              {errors.sections && <p className="mb-3 text-sm text-[#C2413A]">{errors.sections}</p>}
 
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleGenerate}
-                  disabled={!canGenerate}
-                  className="flex items-center gap-2 rounded-lg bg-[#2563A6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {generating ? (
-                    <><Spinner />Generating sections…</>
-                  ) : generated ? (
-                    <><RegenerateIcon />Regenerate</>
-                  ) : (
-                    <><BoltIcon />Generate Sections</>
-                  )}
-                </button>
-                {generated && (
-                  <span className="text-xs text-[#6B7280]">Sections filled below. Edit freely before saving.</span>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={!canGenerate}
+                className="flex items-center gap-2 rounded-lg bg-[#2563A6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {generating ? (
+                  <><Spinner />Generating…</>
+                ) : generated ? (
+                  <><RegenerateIcon />Regenerate</>
+                ) : (
+                  <><BoltIcon className="w-3.5 h-3.5" />Generate</>
                 )}
-              </div>
+              </button>
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-            <div>
-              {/* Title */}
+          {/* Two even columns */}
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-start mb-6">
+
+            {/* Left — Sections */}
+            <Section
+              title="Sections"
+              action={generatedSections ? (
+                <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-[#6B7280]">
+                  {generatedSections.count} total
+                </span>
+              ) : undefined}
+            >
+              {generatedSections ? (
+                <div className="space-y-1.5">
+                  {generatedSections.sections.map((s, i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-md border border-[#E3E0D8] bg-[#FAF9F6] px-3 py-2.5">
+                      <span className="font-mono text-[10px] font-medium text-[#AEB8C2] shrink-0 w-4 text-right">{i + 1}</span>
+                      <span className="text-sm text-[#374151]">{s.title}</span>
+                      {s.sourceType === 'pdf' && (
+                        <span className="ml-auto shrink-0 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">PDF</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-md border border-dashed border-[#D4CEC3] px-4 py-10 text-center">
+                  <p className="text-xs text-[#8A8F98]">Select material above and click Generate — AI will divide it into sections automatically.</p>
+                </div>
+              )}
+              {errors.sections && <p className="mt-2 text-xs text-[#C2413A]">{errors.sections}</p>}
+            </Section>
+
+            {/* Right — Title + Checkpoint */}
+            <div className="space-y-6">
               <Section title="Assignment Title">
                 <Field label="Title" error={errors.title} required>
                   <input
@@ -431,130 +381,17 @@ export function ReadingBuilderClient({
                     onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                     placeholder="e.g. The Great Gatsby — Chapter 1–3 Reading"
                     maxLength={200}
-                    className={input(errors.title)}
+                    className={inputCls(errors.title)}
                   />
                 </Field>
               </Section>
 
-              {/* Sections */}
-              <Section
-                title="Reading Sections"
-                action={
-                  <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-[#6B7280]">
-                    {form.sections.length} / 20 sections
-                  </span>
-                }
-              >
-                <p className="mb-4 text-xs text-[#6B7280]">
-                  Each section ends with a checkpoint. The next section is locked until the student demonstrates critical engagement.
-                </p>
-                <div className="space-y-4">
-                  {form.sections.map((section, index) => (
-                    <div key={index} className="rounded-lg border border-[#E3E0D8] bg-white p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#8A8F98]">
-                            Section {index + 1}
-                          </span>
-                          <div className="flex gap-0.5">
-                            <button
-                              type="button"
-                              onClick={() => moveSection(index, -1)}
-                              disabled={index === 0}
-                              className="px-1 py-0.5 text-xs text-[#8A8F98] hover:text-[#374151] disabled:opacity-30 transition-colors"
-                              aria-label="Move up"
-                            >↑</button>
-                            <button
-                              type="button"
-                              onClick={() => moveSection(index, 1)}
-                              disabled={index === form.sections.length - 1}
-                              className="px-1 py-0.5 text-xs text-[#8A8F98] hover:text-[#374151] disabled:opacity-30 transition-colors"
-                              aria-label="Move down"
-                            >↓</button>
-                          </div>
-                        </div>
-                        {form.sections.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeSection(index)}
-                            className="text-[#8A8F98] hover:text-[#C2413A] transition-colors text-lg leading-none"
-                            aria-label="Remove section"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-[#6B7280]">
-                            Section title <span className="text-[#C2413A]">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={section.title}
-                            onChange={(e) => updateSection(index, 'title', e.target.value)}
-                            placeholder="e.g. The Argument for Economic Inequality"
-                            maxLength={200}
-                            className={input(errors[`section_${index}_title`])}
-                          />
-                          {errors[`section_${index}_title`] && (
-                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`section_${index}_title`]}</p>
-                          )}
-                        </div>
-                        {section.sourceType === 'pdf' ? (
-                          <div className="rounded-md border border-[#D4CEC3] bg-[#F0EEE8] px-3 py-2.5 flex items-start gap-2">
-                            <span className="shrink-0 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 mt-0.5">PDF</span>
-                            <p className="text-xs text-[#6B7280]">
-                              Content extracted from PDF — students will read from the original document.
-                            </p>
-                          </div>
-                        ) : (
-                          <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <label className="block text-xs font-medium text-[#6B7280]">
-                                Content <span className="text-[#C2413A]">*</span>
-                              </label>
-                              <span className="font-mono text-[10px] text-[#8A8F98]">
-                                {section.content.length.toLocaleString()} / 50,000
-                              </span>
-                            </div>
-                            <textarea
-                              value={section.content}
-                              onChange={(e) => updateSection(index, 'content', e.target.value)}
-                              placeholder="Paste the section text here…"
-                              rows={6}
-                              maxLength={50000}
-                              className={input(errors[`section_${index}_content`]) + ' resize-y'}
-                            />
-                            {errors[`section_${index}_content`] && (
-                              <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`section_${index}_content`]}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {form.sections.length < 20 && (
-                  <button
-                    type="button"
-                    onClick={addSection}
-                    className="mt-3 flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors"
-                  >
-                    <span className="text-base leading-none">+</span>
-                    Add section
-                  </button>
-                )}
-              </Section>
-
-              {/* Checkpoint settings */}
               <Section title="Checkpoint Settings">
                 <div className="space-y-4">
                   <div>
                     <p className="mb-2 text-xs font-medium text-[#6B7280]">Checkpoint mode</p>
                     <div className="flex gap-2">
-                      {(['text', 'voice'] as const).map((mode) => (
+                      {(['voice', 'text'] as const).map((mode) => (
                         <button
                           key={mode}
                           type="button"
@@ -566,31 +403,22 @@ export function ReadingBuilderClient({
                               : 'border-[#E3E0D8] bg-white text-[#6B7280] hover:border-[#AEB8C2]',
                           ].join(' ')}
                         >
-                          {mode === 'text' ? 'Text' : 'Voice'}
+                          {mode === 'voice' ? 'Voice' : 'Text'}
                         </button>
                       ))}
                     </div>
                     <p className="mt-2 text-xs text-[#8A8F98]">
-                      {form.checkpointType === 'text'
-                        ? 'Students type their response. AI evaluates and asks adaptive follow-up questions until satisfied.'
-                        : 'Students have a live voice conversation with AI. No time limit — the AI controls when the checkpoint ends.'}
+                      {form.checkpointType === 'voice'
+                        ? 'Students have a live voice conversation with AI after each section. The AI controls pacing.'
+                        : 'Students type their response. AI evaluates and asks adaptive follow-up questions until satisfied.'}
                     </p>
                   </div>
 
                   {form.checkpointType === 'text' && (
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">
-                        Max follow-up questions (text mode)
-                      </label>
+                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">Max follow-up questions</label>
                       <div className="flex items-center gap-3">
-                        <input
-                          type="range"
-                          min={1}
-                          max={5}
-                          value={form.maxFollowUps}
-                          onChange={(e) => setForm((f) => ({ ...f, maxFollowUps: +e.target.value }))}
-                          className="w-32"
-                        />
+                        <input type="range" min={1} max={5} value={form.maxFollowUps} onChange={(e) => setForm((f) => ({ ...f, maxFollowUps: +e.target.value }))} className="w-32" />
                         <span className="font-mono text-sm font-semibold text-[#18202A] w-4">{form.maxFollowUps}</span>
                       </div>
                       <p className="mt-1 text-xs text-[#8A8F98]">
@@ -599,198 +427,72 @@ export function ReadingBuilderClient({
                     </div>
                   )}
 
-                  <Toggle
-                    label="AI grading"
-                    checked={form.aiGradingEnabled}
-                    onChange={(v) => setForm((f) => ({ ...f, aiGradingEnabled: v }))}
-                  />
+                  <Toggle label="AI grading" checked={form.aiGradingEnabled} onChange={(v) => setForm((f) => ({ ...f, aiGradingEnabled: v }))} />
                 </div>
               </Section>
-
-              {/* Rubric */}
-              <Section
-                title="Rubric"
-                action={
-                  <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-[#6B7280]">
-                    Total <strong className="text-[#18202A]">{totalPoints} pts</strong>
-                  </span>
-                }
-              >
-                <p className="mb-3 text-xs text-[#8A8F98]">
-                  Rubric is evaluated holistically across all checkpoint conversations at final submission.
-                </p>
-                <div className="space-y-3">
-                  {form.rubric.map((criterion, index) => (
-                    <div key={index} className="rounded-lg border border-[#E3E0D8] bg-white p-4">
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#8A8F98]">
-                          Criterion {index + 1}
-                        </span>
-                        {form.rubric.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeCriterion(index)}
-                            className="text-[#8A8F98] hover:text-[#C2413A] transition-colors text-lg leading-none"
-                            aria-label="Remove criterion"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-4">
-                        <div className="sm:col-span-1">
-                          <label className="mb-1 block text-xs font-medium text-[#6B7280]">Label</label>
-                          <input
-                            type="text"
-                            value={criterion.label}
-                            onChange={(e) => updateCriterion(index, 'label', e.target.value)}
-                            placeholder="e.g. Analysis"
-                            maxLength={100}
-                            className={input(errors[`rubric_${index}_label`])}
-                          />
-                          {errors[`rubric_${index}_label`] && (
-                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_label`]}</p>
-                          )}
-                        </div>
-                        <div className="sm:col-span-2">
-                          <label className="mb-1 block text-xs font-medium text-[#6B7280]">Description</label>
-                          <input
-                            type="text"
-                            value={criterion.description}
-                            onChange={(e) => updateCriterion(index, 'description', e.target.value)}
-                            placeholder="e.g. Identifies what the text argues and evaluates the evidence"
-                            maxLength={500}
-                            className={input(errors[`rubric_${index}_description`])}
-                          />
-                          {errors[`rubric_${index}_description`] && (
-                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_description`]}</p>
-                          )}
-                        </div>
-                        <div className="sm:col-span-1">
-                          <label className="mb-1 block text-xs font-medium text-[#6B7280]">Max points</label>
-                          <input
-                            type="number"
-                            value={criterion.maxPoints}
-                            onChange={(e) => updateCriterion(index, 'maxPoints', Math.min(100, Math.max(1, +e.target.value)))}
-                            min={1}
-                            max={100}
-                            className={input(errors[`rubric_${index}_points`])}
-                          />
-                          {errors[`rubric_${index}_points`] && (
-                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_points`]}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {form.rubric.length < 6 && (
-                  <button
-                    type="button"
-                    onClick={addCriterion}
-                    className="mt-3 flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors"
-                  >
-                    <span className="text-base leading-none">+</span>
-                    Add criterion
-                  </button>
-                )}
-              </Section>
-
-              {apiError && (
-                <div className="mb-4 rounded-lg border border-[#E7B8B4] bg-[#FBEDEA] px-4 py-3 text-sm text-[#C2413A]">
-                  {apiError}
-                </div>
-              )}
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex items-center gap-2 rounded-lg bg-[#2563A6] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                >
-                  {submitting ? (
-                    <><Spinner />Creating assignment…</>
-                  ) : (
-                    <>Create Assignment <span>→</span></>
-                  )}
-                </button>
-              </div>
             </div>
+          </div>
 
-            {/* Sidebar preview */}
-            <aside className="lg:sticky lg:top-6">
-              <div className="overflow-hidden rounded-lg border border-[#D4CEC3] bg-white shadow-sm">
-                <div className="border-b border-[#E3E0D8] bg-[#FAF9F6] px-5 py-4">
-                  <p className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#2563A6]">Teacher Preview</p>
-                  <h2 className="mt-1 text-lg font-semibold text-[#18202A]">
-                    {form.title.trim() || 'Untitled assignment'}
-                  </h2>
-                </div>
-                <div className="space-y-5 p-5">
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold text-[#374151]">Student flow</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <PreviewMetric label="Sections" value={String(form.sections.length)} />
-                      <PreviewMetric label="Mode" value={form.checkpointType === 'text' ? 'Text' : 'Voice'} />
-                      {form.checkpointType === 'text' && (
-                        <PreviewMetric label="Max follow-ups" value={String(form.maxFollowUps)} />
-                      )}
-                      <PreviewMetric label="AI grading" value={form.aiGradingEnabled ? 'On' : 'Off'} />
-                    </div>
+          {/* Rubric — full width */}
+          <Section
+            title="Rubric"
+            action={
+              <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-[#6B7280]">
+                Total <strong className="text-[#18202A]">{totalPoints} pts</strong>
+              </span>
+            }
+          >
+            <p className="mb-4 text-xs text-[#8A8F98]">Graded holistically across all checkpoint conversations at final submission.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {form.rubric.map((criterion, index) => (
+                <div key={index} className="rounded-lg border border-[#E3E0D8] bg-white p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#8A8F98]">Criterion {index + 1}</span>
+                    {form.rubric.length > 1 && (
+                      <button type="button" onClick={() => removeCriterion(index)} className="text-[#8A8F98] hover:text-[#C2413A] transition-colors text-lg leading-none">×</button>
+                    )}
                   </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold text-[#374151]">Scaffold prompt</h3>
-                    <p className="rounded-md border border-[#E3E0D8] bg-[#FAF9F6] p-3 text-xs leading-relaxed italic text-[#374151]">
-                      &ldquo;In your own words, what is this section arguing, and do you find it convincing?&rdquo;
-                    </p>
-                    <p className="mt-1.5 text-[10px] text-[#8A8F98]">Fixed prompt — not customizable. Ensures consistent critical engagement.</p>
-                  </div>
-                  <div>
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-[#374151]">Sections</h3>
-                      <span className="text-xs text-[#6B7280]">{form.sections.length} total</span>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">Label</label>
+                      <input type="text" value={criterion.label} onChange={(e) => updateCriterion(index, 'label', e.target.value)} placeholder="e.g. Critical Engagement" maxLength={100} className={inputCls(errors[`rubric_${index}_label`])} />
+                      {errors[`rubric_${index}_label`] && <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_label`]}</p>}
                     </div>
-                    <div className="space-y-1.5">
-                      {form.sections.map((s, i) => (
-                        <div key={i} className="flex items-center gap-2 rounded border border-[#E3E0D8] px-2.5 py-1.5">
-                          <span className="font-mono text-[10px] text-[#8A8F98] shrink-0">{i + 1}</span>
-                          <span className="truncate text-xs text-[#374151]">
-                            {s.title.trim() || `Section ${i + 1}`}
-                          </span>
-                          {s.sourceType === 'pdf' ? (
-                            <span className="ml-auto shrink-0 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">PDF</span>
-                          ) : s.content.trim() ? (
-                            <span className="ml-auto font-mono text-[10px] text-[#8A8F98] shrink-0">
-                              {s.content.length.toLocaleString()} ch
-                            </span>
-                          ) : null}
-                        </div>
-                      ))}
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">Description</label>
+                      <input type="text" value={criterion.description} onChange={(e) => updateCriterion(index, 'description', e.target.value)} placeholder="What does good look like?" maxLength={500} className={inputCls(errors[`rubric_${index}_description`])} />
+                      {errors[`rubric_${index}_description`] && <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_description`]}</p>}
                     </div>
-                  </div>
-                  <div>
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-[#374151]">Rubric</h3>
-                      <span className="text-xs font-semibold text-[#18202A]">{totalPoints} pts</span>
-                    </div>
-                    <div className="rounded-md border border-[#E3E0D8]">
-                      {form.rubric.filter((c) => c.label.trim()).length > 0 ? (
-                        <div className="divide-y divide-[#E3E0D8]">
-                          {form.rubric.filter((c) => c.label.trim()).map((c, i) => (
-                            <div key={i} className="flex items-center justify-between gap-3 px-3 py-2">
-                              <p className="text-xs font-medium text-[#18202A]">{c.label}</p>
-                              <span className="shrink-0 text-xs text-[#6B7280]">{c.maxPoints} pts</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="px-3 py-3 text-xs text-[#6B7280]">Add rubric criteria to preview grading.</p>
-                      )}
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-[#6B7280]">Max points</label>
+                      <input type="number" value={criterion.maxPoints} onChange={(e) => updateCriterion(index, 'maxPoints', Math.min(100, Math.max(1, +e.target.value)))} min={1} max={100} className={inputCls(errors[`rubric_${index}_points`])} />
+                      {errors[`rubric_${index}_points`] && <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`rubric_${index}_points`]}</p>}
                     </div>
                   </div>
                 </div>
-              </div>
-            </aside>
+              ))}
+            </div>
+            {form.rubric.length < 6 && (
+              <button type="button" onClick={addCriterion} className="mt-4 flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors">
+                <span className="text-base leading-none">+</span>
+                Add criterion
+              </button>
+            )}
+          </Section>
+
+          {apiError && (
+            <div className="mb-4 rounded-lg border border-[#E7B8B4] bg-[#FBEDEA] px-4 py-3 text-sm text-[#C2413A]">
+              {apiError}
+            </div>
+          )}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex items-center gap-2 rounded-lg bg-[#2563A6] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              {submitting ? <><Spinner />Creating assignment…</> : <>Create Assignment <span>→</span></>}
+            </button>
           </div>
         </form>
       </div>
@@ -800,24 +502,7 @@ export function ReadingBuilderClient({
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 
-function PreviewMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-[#E3E0D8] bg-[#FAF9F6] px-3 py-2">
-      <p className="font-mono text-[10px] uppercase tracking-wider text-[#8A8F98]">{label}</p>
-      <p className="mt-0.5 text-sm font-semibold text-[#18202A]">{value}</p>
-    </div>
-  )
-}
-
-function Section({
-  title,
-  action,
-  children,
-}: {
-  title: string
-  action?: React.ReactNode
-  children: React.ReactNode
-}) {
+function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="mb-6 rounded-lg border border-[#E3E0D8] bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -829,22 +514,11 @@ function Section({
   )
 }
 
-function Field({
-  label,
-  error,
-  required,
-  children,
-}: {
-  label: string
-  error?: string
-  required?: boolean
-  children: React.ReactNode
-}) {
+function Field({ label, error, required, children }: { label: string; error?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="mb-4 last:mb-0">
       <label className="mb-1 block text-sm font-medium text-[#374151]">
-        {label}
-        {required && <span className="ml-0.5 text-[#C2413A]">*</span>}
+        {label}{required && <span className="ml-0.5 text-[#C2413A]">*</span>}
       </label>
       {children}
       {error && <p className="mt-1 text-xs text-[#C2413A]">{error}</p>}
@@ -854,11 +528,7 @@ function Field({
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className="flex items-center gap-2 text-sm text-[#374151]"
-    >
+    <button type="button" onClick={() => onChange(!checked)} className="flex items-center gap-2 text-sm text-[#374151]">
       <div className={['relative h-5 w-9 rounded-full transition-colors', checked ? 'bg-[#2563A6]' : 'bg-[#D7D2C8]'].join(' ')}>
         <div className={['absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform', checked ? 'translate-x-4' : 'translate-x-0.5'].join(' ')} />
       </div>
@@ -869,16 +539,16 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 
 function Spinner() {
   return (
-    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+    <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
   )
 }
 
-function BoltIcon() {
+function BoltIcon({ className }: { className?: string }) {
   return (
-    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <svg className={className ?? 'w-4 h-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   )
@@ -892,13 +562,16 @@ function RegenerateIcon() {
   )
 }
 
-function InlineMaterialForm({
-  onAdd,
-  onCancel,
-}: {
-  onAdd: (m: { title: string; content: string }) => void
-  onCancel: () => void
-}) {
+function inputCls(error?: string) {
+  return [
+    'w-full rounded-md border px-3 py-2 text-sm text-[#18202A] outline-none transition-colors',
+    'placeholder:text-[#8A8F98]',
+    'focus:ring-2 focus:ring-[#2563A6] focus:border-transparent',
+    error ? 'border-[#C2413A] bg-[#FBEDEA]' : 'border-[#E3E0D8] bg-white hover:border-[#D4CEC3]',
+  ].join(' ')
+}
+
+function InlineMaterialForm({ onAdd, onCancel }: { onAdd: (m: { title: string; content: string }) => void; onCancel: () => void }) {
   const [source, setSource] = useState<'text' | 'url' | 'pdf'>('text')
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -911,20 +584,12 @@ function InlineMaterialForm({
     setLoading(true)
     setError(null)
     try {
-      if (source === 'text') {
-        onAdd({ title: title.trim(), content: content.trim() })
-        return
-      }
+      if (source === 'text') { onAdd({ title: title.trim(), content: content.trim() }); return }
       if (source === 'url') {
-        const res = await fetch('/api/materials/extract-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        })
+        const res = await fetch('/api/materials/extract-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
         const data = await res.json()
         if (!res.ok) { setError(data.error ?? 'Failed to fetch URL'); return }
-        onAdd({ title: data.title, content: data.content })
-        return
+        onAdd({ title: data.title, content: data.content }); return
       }
       if (source === 'pdf' && file) {
         const formData = new FormData()
@@ -934,29 +599,17 @@ function InlineMaterialForm({
         if (!res.ok) { setError(data.error ?? 'Failed to extract PDF'); return }
         onAdd({ title: data.title, content: data.content })
       }
-    } catch {
-      setError('Network error. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+    } catch { setError('Network error. Please try again.') }
+    finally { setLoading(false) }
   }
 
-  const canAdd = !loading && (
-    source === 'text' ? title.trim().length > 0 && content.trim().length > 0
-    : source === 'url' ? url.trim().length > 0
-    : file !== null
-  )
+  const canAdd = !loading && (source === 'text' ? title.trim().length > 0 && content.trim().length > 0 : source === 'url' ? url.trim().length > 0 : file !== null)
 
   return (
     <div className="mt-2 rounded-lg border border-[#E3E0D8] bg-[#FAF9F6] p-4">
       <div className="mb-3 flex gap-1 rounded-md bg-[#E3E0D8] p-0.5 w-fit">
         {(['text', 'url', 'pdf'] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => { setSource(s); setError(null) }}
-            className={['px-3 py-1 text-xs font-medium rounded transition-colors', source === s ? 'bg-[#2563A6] text-white' : 'text-[#6B7280] hover:text-[#374151]'].join(' ')}
-          >
+          <button key={s} type="button" onClick={() => { setSource(s); setError(null) }} className={['px-3 py-1 text-xs font-medium rounded transition-colors', source === s ? 'bg-[#2563A6] text-white' : 'text-[#6B7280] hover:text-[#374151]'].join(' ')}>
             {s === 'text' ? 'Text' : s === 'url' ? 'Link' : 'PDF'}
           </button>
         ))}
@@ -965,18 +618,18 @@ function InlineMaterialForm({
         <>
           <div className="mb-3">
             <label className="mb-1 block text-xs font-medium text-[#6B7280]">Title</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Chapter 5" maxLength={200} autoFocus className="w-full rounded-md border border-[#E3E0D8] bg-white px-3 py-1.5 text-sm text-[#18202A] outline-none focus:ring-2 focus:ring-[#2563A6] focus:border-transparent placeholder:text-[#8A8F98]" />
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Chapter 5" maxLength={200} autoFocus className="w-full rounded-md border border-[#E3E0D8] bg-white px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[#2563A6] focus:border-transparent placeholder:text-[#8A8F98]" />
           </div>
           <div className="mb-3">
             <label className="mb-1 block text-xs font-medium text-[#6B7280]">Content</label>
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Paste the reading here…" rows={5} maxLength={50000} className="w-full rounded-md border border-[#E3E0D8] bg-white px-3 py-1.5 text-sm text-[#18202A] outline-none focus:ring-2 focus:ring-[#2563A6] focus:border-transparent placeholder:text-[#8A8F98] resize-none" />
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Paste the reading here…" rows={5} maxLength={50000} className="w-full rounded-md border border-[#E3E0D8] bg-white px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[#2563A6] focus:border-transparent placeholder:text-[#8A8F98] resize-none" />
           </div>
         </>
       )}
       {source === 'url' && (
         <div className="mb-3">
           <label className="mb-1 block text-xs font-medium text-[#6B7280]">URL</label>
-          <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" autoFocus className="w-full rounded-md border border-[#E3E0D8] bg-white px-3 py-1.5 text-sm text-[#18202A] outline-none focus:ring-2 focus:ring-[#2563A6] focus:border-transparent placeholder:text-[#8A8F98]" />
+          <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" autoFocus className="w-full rounded-md border border-[#E3E0D8] bg-white px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[#2563A6] focus:border-transparent placeholder:text-[#8A8F98]" />
           <p className="mt-0.5 text-xs text-[#8A8F98]">Title and text extracted automatically.</p>
         </div>
       )}
@@ -990,8 +643,7 @@ function InlineMaterialForm({
       {error && <p className="mb-2 text-xs text-[#C2413A]">{error}</p>}
       <div className="flex gap-2">
         <button type="button" onClick={handleAdd} disabled={!canAdd} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#2563A6] rounded-md hover:bg-[#1E518B] disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
-          {loading && <Spinner />}
-          {loading ? 'Adding…' : 'Add'}
+          {loading && <Spinner />}{loading ? 'Adding…' : 'Add'}
         </button>
         <button type="button" onClick={onCancel} className="px-3 py-1.5 text-xs font-medium text-[#6B7280] border border-[#E3E0D8] rounded-md hover:bg-white transition-colors">Cancel</button>
       </div>
@@ -999,20 +651,9 @@ function InlineMaterialForm({
   )
 }
 
-function input(error?: string) {
-  return [
-    'w-full rounded-md border px-3 py-2 text-sm text-[#18202A] outline-none transition-colors',
-    'placeholder:text-[#8A8F98]',
-    'focus:ring-2 focus:ring-[#2563A6] focus:border-transparent',
-    error ? 'border-[#C2413A] bg-[#FBEDEA]' : 'border-[#E3E0D8] bg-white hover:border-[#D4CEC3]',
-  ].join(' ')
-}
-
 function returnToCanvas(jwt: string, returnUrl: string) {
   const parsed = new URL(returnUrl)
-  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-    throw new Error(`returnUrl has unexpected protocol: ${parsed.protocol}`)
-  }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error(`returnUrl has unexpected protocol: ${parsed.protocol}`)
   const form = document.createElement('form')
   form.method = 'POST'
   form.action = parsed.href

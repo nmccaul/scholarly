@@ -17,7 +17,7 @@ interface Props {
 }
 
 const SCAFFOLD_QUESTION =
-  'In your own words, what is this section arguing, and do you find it convincing?'
+  'Go ahead and share anything about this section — a summary, what stood out to you, or any questions you have.'
 
 export function ReadingChatPane({ submissionId, sectionIndex, onCheckpointResolved }: Props) {
   const [status, setStatus] = useState<PaneStatus>('chatting')

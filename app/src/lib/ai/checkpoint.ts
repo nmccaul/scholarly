@@ -37,7 +37,12 @@ FAILING — do not pass these responses:
 - Responses under 30 words
 - Responses that only repeat the prompt back
 
-When failing, generate a targeted follow-up question that probes SPECIFICALLY what the student said — push them to explain their reasoning or evaluate the argument. Make the question direct and answerable in 2–3 sentences.
+When failing, generate a follow-up question that is dynamic and specific to exactly what the student said:
+- If they mention something they found interesting, ask why it caught their attention
+- If they raise a question or confusion, explore it further
+- If they summarize without evaluating the argument, ask what they think of it
+- If they express a personal reaction or opinion, ask them to explain their reasoning
+Make the question direct and answerable in 2–3 sentences.
 
 Section title: ${params.sectionTitle}
 
@@ -52,7 +57,7 @@ followUpQuestion: A specific probing question when failing. null when passed.`,
         },
         {
           role: 'user',
-          content: `Checkpoint conversation (student responded to: "In your own words, what is this section arguing, and do you find it convincing?"):\n\n${conversationText}`,
+          content: `Checkpoint conversation (student was invited to share anything about the section — a summary, what stood out, or any questions they have):\n\n${conversationText}`,
         },
       ],
       response_format: { type: 'json_object' },
