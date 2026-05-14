@@ -9,13 +9,28 @@ export interface RubricCriterionInput {
 export interface CourseMaterialInput {
   title: string
   content: string
+  pdfStoragePath?: string
 }
 
 export interface CourseMaterialResponse {
   id: CourseMaterialId
   title: string
   content: string
+  pdfStoragePath?: string
   createdAt: string
+}
+
+export interface ProcessPdfSectionResult {
+  title: string
+  content: string
+  pdfStoragePath: string
+  startPage: number
+  endPage: number
+}
+
+export interface ProcessPdfResponse {
+  sections: ProcessPdfSectionResult[]
+  totalPages: number
 }
 
 export interface CreateOralAssessmentRequest {
@@ -122,7 +137,7 @@ export interface GenerateAssignmentResponse {
 
 export interface CreateReadingAssessmentRequest {
   title: string
-  sections: Array<{ title: string; content: string }>
+  sections: Array<{ title: string; content: string; sourceType?: 'text' | 'pdf'; pdfStoragePath?: string }>
   checkpointType: 'text' | 'voice'
   maxFollowUps: number
   aiGradingEnabled: boolean
@@ -133,7 +148,7 @@ export interface CreateReadingAssessmentRequest {
 
 export interface UpdateReadingAssessmentRequest {
   title: string
-  sections: Array<{ title: string; content: string }>
+  sections: Array<{ title: string; content: string; sourceType?: 'text' | 'pdf'; pdfStoragePath?: string }>
   checkpointType: 'text' | 'voice'
   maxFollowUps: number
   aiGradingEnabled: boolean
@@ -148,7 +163,7 @@ export interface GenerateReadingAssignmentRequest {
 
 export interface GenerateReadingAssignmentResponse {
   title: string
-  sections: Array<{ title: string; content: string }>
+  sections: Array<{ title: string; content: string; sourceType?: 'text' | 'pdf'; pdfStoragePath?: string }>
   rubric: RubricCriterionInput[]
 }
 
@@ -191,4 +206,15 @@ export interface GradeOverrideResponse {
   finalGrade: number
   teacherFeedback: string | null
   syncStatus: 'pending' | 'success' | 'failed' | null  // null = no lineitem URL to sync
+}
+
+// ─── Mission Control insights chat ───────────────────────────────────────────
+
+export interface InsightsChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface InsightsChatRequest {
+  messages: InsightsChatMessage[]
 }

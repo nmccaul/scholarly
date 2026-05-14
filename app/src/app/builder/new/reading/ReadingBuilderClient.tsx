@@ -15,6 +15,8 @@ import type {
 interface SectionDraft {
   title: string
   content: string
+  sourceType: 'text' | 'pdf'
+  pdfStoragePath?: string
 }
 
 interface AssignmentMaterialDraft {
@@ -35,7 +37,7 @@ interface FormState {
 
 const DEFAULT_FORM: FormState = {
   title: '',
-  sections: [{ title: '', content: '' }],
+  sections: [{ title: '', content: '', sourceType: 'text' }],
   checkpointType: 'text',
   maxFollowUps: 3,
   aiGradingEnabled: true,
@@ -55,7 +57,7 @@ export function ReadingBuilderClient({
   returnUrl: string
   dlData?: string
   isDevMode?: boolean
-  courseMaterials?: Array<{ id: string; title: string; content: string }>
+  courseMaterials?: Array<{ id: string; title: string; content: string; pdfStoragePath?: string }>
 }) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
@@ -93,7 +95,7 @@ export function ReadingBuilderClient({
       setForm((f) => ({
         ...f,
         title: data.title,
-        sections: data.sections,
+        sections: data.sections.map((s) => ({ ...s, sourceType: s.sourceType ?? ('text' as const) })),
         rubric: data.rubric,
       }))
       setErrors({})
@@ -114,7 +116,7 @@ export function ReadingBuilderClient({
 
   function addSection() {
     if (form.sections.length >= 20) return
-    setForm((prev) => ({ ...prev, sections: [...prev.sections, { title: '', content: '' }] }))
+    setForm((prev) => ({ ...prev, sections: [...prev.sections, { title: '', content: '', sourceType: 'text' }] }))
   }
 
   function removeSection(index: number) {
@@ -156,7 +158,7 @@ export function ReadingBuilderClient({
     if (form.sections.length < 1) next.sections = 'At least 1 section required'
     form.sections.forEach((s, i) => {
       if (!s.title.trim()) next[`section_${i}_title`] = 'Required'
-      if (!s.content.trim()) next[`section_${i}_content`] = 'Required'
+      if (s.sourceType !== 'pdf' && !s.content.trim()) next[`section_${i}_content`] = 'Required'
     })
     form.rubric.forEach((c, i) => {
       if (!c.label.trim()) next[`rubric_${i}_label`] = 'Required'
@@ -176,7 +178,11 @@ export function ReadingBuilderClient({
     try {
       const body: CreateReadingAssessmentRequest = {
         title: form.title.trim(),
-        sections: form.sections.map((s) => ({ title: s.title.trim(), content: s.content.trim() })),
+        sections: form.sections.map((s) => ({
+          title: s.title.trim(),
+          content: s.content.trim(),
+          ...(s.sourceType === 'pdf' ? { sourceType: 'pdf' as const, pdfStoragePath: s.pdfStoragePath } : {}),
+        })),
         checkpointType: form.checkpointType,
         maxFollowUps: form.maxFollowUps,
         aiGradingEnabled: form.aiGradingEnabled,
@@ -304,7 +310,12 @@ export function ReadingBuilderClient({
                           }
                           className="mt-0.5 h-4 w-4 rounded border-[#D4CEC3] text-[#18202A] focus:ring-[#2563A6]"
                         />
-                        <span className="text-sm text-[#374151]">{m.title}</span>
+                        <span className="flex items-center gap-2 text-sm text-[#374151]">
+                          {m.title}
+                          {m.pdfStoragePath && (
+                            <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">PDF</span>
+                          )}
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -490,27 +501,36 @@ export function ReadingBuilderClient({
                             <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`section_${index}_title`]}</p>
                           )}
                         </div>
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="block text-xs font-medium text-[#6B7280]">
-                              Content <span className="text-[#C2413A]">*</span>
-                            </label>
-                            <span className="font-mono text-[10px] text-[#8A8F98]">
-                              {section.content.length.toLocaleString()} / 50,000
-                            </span>
+                        {section.sourceType === 'pdf' ? (
+                          <div className="rounded-md border border-[#D4CEC3] bg-[#F0EEE8] px-3 py-2.5 flex items-start gap-2">
+                            <span className="shrink-0 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 mt-0.5">PDF</span>
+                            <p className="text-xs text-[#6B7280]">
+                              Content extracted from PDF — students will read from the original document.
+                            </p>
                           </div>
-                          <textarea
-                            value={section.content}
-                            onChange={(e) => updateSection(index, 'content', e.target.value)}
-                            placeholder="Paste the section text here…"
-                            rows={6}
-                            maxLength={50000}
-                            className={input(errors[`section_${index}_content`]) + ' resize-y'}
-                          />
-                          {errors[`section_${index}_content`] && (
-                            <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`section_${index}_content`]}</p>
-                          )}
-                        </div>
+                        ) : (
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-xs font-medium text-[#6B7280]">
+                                Content <span className="text-[#C2413A]">*</span>
+                              </label>
+                              <span className="font-mono text-[10px] text-[#8A8F98]">
+                                {section.content.length.toLocaleString()} / 50,000
+                              </span>
+                            </div>
+                            <textarea
+                              value={section.content}
+                              onChange={(e) => updateSection(index, 'content', e.target.value)}
+                              placeholder="Paste the section text here…"
+                              rows={6}
+                              maxLength={50000}
+                              className={input(errors[`section_${index}_content`]) + ' resize-y'}
+                            />
+                            {errors[`section_${index}_content`] && (
+                              <p className="mt-0.5 text-xs text-[#C2413A]">{errors[`section_${index}_content`]}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -737,11 +757,13 @@ export function ReadingBuilderClient({
                           <span className="truncate text-xs text-[#374151]">
                             {s.title.trim() || `Section ${i + 1}`}
                           </span>
-                          {s.content.trim() && (
+                          {s.sourceType === 'pdf' ? (
+                            <span className="ml-auto shrink-0 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">PDF</span>
+                          ) : s.content.trim() ? (
                             <span className="ml-auto font-mono text-[10px] text-[#8A8F98] shrink-0">
                               {s.content.length.toLocaleString()} ch
                             </span>
-                          )}
+                          ) : null}
                         </div>
                       ))}
                     </div>

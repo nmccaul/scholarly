@@ -191,7 +191,6 @@ export async function appendAiFollowUpQuestion(
     .from('reading_checkpoints')
     .update({
       conversation: [...cp.conversation, { role: 'ai', text: question }],
-      follow_up_count: cp.followUpCount + 1,
     })
     .eq('submission_id', submissionId)
     .eq('section_index', sectionIndex)
@@ -213,6 +212,7 @@ export async function appendStudentFollowUpAnswer(
     .from('reading_checkpoints')
     .update({
       conversation: [...cp.conversation, { role: 'student', text: answer }],
+      follow_up_count: cp.followUpCount + 1,
     })
     .eq('submission_id', submissionId)
     .eq('section_index', sectionIndex)
@@ -525,6 +525,216 @@ export async function overrideReadingGrade(params: {
     .eq('id', params.submissionId)
 
   if (subError) throw new Error(`Failed to update submission status after override: ${subError.message}`)
+}
+
+// ─── Mission Control insights ─────────────────────────────────────────────────
+
+export interface SectionStats {
+  sectionIndex: number
+  sectionTitle: string
+  totalReached: number
+  passedCount: number
+  forceUnlockedCount: number
+  avgFollowUps: number
+}
+
+export interface StudentGridRow {
+  submissionId: SubmissionId
+  studentName: string | null
+  studentEmail: string | null
+  status: SubmissionStatus
+  finalGrade: number | null
+  checkpointsBySection: Record<number, CheckpointStatus>
+}
+
+export interface ClassInsightsStats {
+  submittedCount: number
+  inProgressCount: number
+  sectionStats: SectionStats[]
+  studentGrid: StudentGridRow[]
+}
+
+export async function getClassInsightsStats(
+  assignmentId: AssignmentId,
+  sectionTitles: string[]
+): Promise<ClassInsightsStats> {
+  const db = createServiceClient()
+
+  const { data: subRows, error: subError } = await db
+    .from('submissions')
+    .select('id, status, users!student_id(name, email), reading_assessment_submissions(final_grade)')
+    .eq('assignment_id', assignmentId)
+
+  if (subError) throw new Error(`Failed to fetch submissions for insights: ${subError.message}`)
+
+  const rows = (subRows ?? []) as unknown as Array<{
+    id: string
+    status: string
+    users: { name: string | null; email: string | null } | null
+    reading_assessment_submissions: { final_grade: number | null } | null
+  }>
+
+  if (rows.length === 0) {
+    return {
+      submittedCount: 0,
+      inProgressCount: 0,
+      sectionStats: sectionTitles.map((title, i) => ({
+        sectionIndex: i,
+        sectionTitle: title,
+        totalReached: 0,
+        passedCount: 0,
+        forceUnlockedCount: 0,
+        avgFollowUps: 0,
+      })),
+      studentGrid: [],
+    }
+  }
+
+  const ids = rows.map((r) => r.id)
+
+  const { data: cpRows, error: cpError } = await db
+    .from('reading_checkpoints')
+    .select('submission_id, section_index, status, follow_up_count')
+    .in('submission_id', ids)
+
+  if (cpError) throw new Error(`Failed to fetch checkpoints for insights: ${cpError.message}`)
+
+  const checkpointData = (cpRows ?? []) as Array<{
+    submission_id: string
+    section_index: number
+    status: string
+    follow_up_count: number
+  }>
+
+  // Build per-student checkpoint maps
+  const cpBySubmission = new Map<string, Record<number, CheckpointStatus>>()
+  for (const cp of checkpointData) {
+    const map = cpBySubmission.get(cp.submission_id) ?? {}
+    map[cp.section_index] = cp.status as CheckpointStatus
+    cpBySubmission.set(cp.submission_id, map)
+  }
+
+  // Build per-section aggregate stats
+  const sectionAgg = new Map<number, { passed: number; forceUnlocked: number; reached: number; followUpSum: number }>()
+  for (const cp of checkpointData) {
+    if (cp.status === 'locked') continue
+    const agg = sectionAgg.get(cp.section_index) ?? { passed: 0, forceUnlocked: 0, reached: 0, followUpSum: 0 }
+    agg.reached++
+    agg.followUpSum += cp.follow_up_count
+    if (cp.status === 'passed') agg.passed++
+    if (cp.status === 'force_unlocked') agg.forceUnlocked++
+    sectionAgg.set(cp.section_index, agg)
+  }
+
+  const sectionStats: SectionStats[] = sectionTitles.map((title, i) => {
+    const agg = sectionAgg.get(i)
+    if (!agg || agg.reached === 0) {
+      return { sectionIndex: i, sectionTitle: title, totalReached: 0, passedCount: 0, forceUnlockedCount: 0, avgFollowUps: 0 }
+    }
+    return {
+      sectionIndex: i,
+      sectionTitle: title,
+      totalReached: agg.reached,
+      passedCount: agg.passed,
+      forceUnlockedCount: agg.forceUnlocked,
+      avgFollowUps: Math.round((agg.followUpSum / agg.reached) * 10) / 10,
+    }
+  })
+
+  let submittedCount = 0
+  let inProgressCount = 0
+  const studentGrid: StudentGridRow[] = rows.map((r) => {
+    if (r.status === 'submitted' || r.status === 'graded') submittedCount++
+    else if (r.status === 'in_progress') inProgressCount++
+    return {
+      submissionId: r.id as SubmissionId,
+      studentName: r.users?.name ?? null,
+      studentEmail: r.users?.email ?? null,
+      status: r.status as SubmissionStatus,
+      finalGrade: r.reading_assessment_submissions?.final_grade ?? null,
+      checkpointsBySection: cpBySubmission.get(r.id) ?? {},
+    }
+  })
+
+  return { submittedCount, inProgressCount, sectionStats, studentGrid }
+}
+
+export interface StudentCheckpointData {
+  submissionId: SubmissionId
+  studentName: string | null
+  studentEmail: string | null
+  status: SubmissionStatus
+  finalGrade: number | null
+  checkpoints: ReadingCheckpoint[]
+}
+
+export async function getAllCheckpointsForAssignment(
+  assignmentId: AssignmentId
+): Promise<StudentCheckpointData[]> {
+  const db = createServiceClient()
+
+  const { data: subRows, error: subError } = await db
+    .from('submissions')
+    .select('id, status, users!student_id(name, email), reading_assessment_submissions(final_grade)')
+    .eq('assignment_id', assignmentId)
+
+  if (subError) throw new Error(`Failed to fetch submissions for chat context: ${subError.message}`)
+
+  const rows = (subRows ?? []) as unknown as Array<{
+    id: string
+    status: string
+    users: { name: string | null; email: string | null } | null
+    reading_assessment_submissions: { final_grade: number | null } | null
+  }>
+
+  if (rows.length === 0) return []
+
+  const ids = rows.map((r) => r.id)
+
+  const { data: cpRows, error: cpError } = await db
+    .from('reading_checkpoints')
+    .select('id, submission_id, section_index, conversation, status, started_at, passed_at, follow_up_count, ai_feedback')
+    .in('submission_id', ids)
+    .order('submission_id')
+    .order('section_index')
+
+  if (cpError) throw new Error(`Failed to fetch checkpoints for chat context: ${cpError.message}`)
+
+  // Check total conversation size and truncate if needed
+  const allCps = (cpRows ?? []) as unknown as Array<Parameters<typeof rowToCheckpoint>[0]>
+  let totalChars = 0
+  for (const cp of allCps) {
+    for (const turn of (cp.conversation as Array<{ text: string }>) ?? []) {
+      totalChars += turn.text?.length ?? 0
+    }
+  }
+  const shouldTruncate = totalChars > 240_000
+  if (shouldTruncate) {
+    console.warn(`[insights] Conversation data exceeds 240k chars (${totalChars}). Truncating turns to 500 chars.`)
+  }
+
+  const cpBySubmission = new Map<string, ReadingCheckpoint[]>()
+  for (const rawCp of allCps) {
+    const cp = rowToCheckpoint(rawCp)
+    if (shouldTruncate) {
+      cp.conversation = cp.conversation.map((turn) => ({
+        ...turn,
+        text: turn.text.length > 500 ? turn.text.slice(0, 500) + '…' : turn.text,
+      }))
+    }
+    const list = cpBySubmission.get(cp.submissionId) ?? []
+    list.push(cp)
+    cpBySubmission.set(cp.submissionId, list)
+  }
+
+  return rows.map((r) => ({
+    submissionId: r.id as SubmissionId,
+    studentName: r.users?.name ?? null,
+    studentEmail: r.users?.email ?? null,
+    status: r.status as SubmissionStatus,
+    finalGrade: r.reading_assessment_submissions?.final_grade ?? null,
+    checkpoints: cpBySubmission.get(r.id) ?? [],
+  }))
 }
 
 export async function resetReadingSubmission(submissionId: SubmissionId): Promise<void> {

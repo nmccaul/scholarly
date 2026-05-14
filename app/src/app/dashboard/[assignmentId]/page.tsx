@@ -64,6 +64,14 @@ export default async function DashboardPage({
             >
               ← All assignments
             </Link>
+            {assignment.type === 'reading_assessment' && (
+              <Link
+                href={`/dashboard/${assignment.id}/insights`}
+                className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E3E0D8] rounded-lg hover:bg-white transition-colors"
+              >
+                Insights
+              </Link>
+            )}
             <Link
               href={`/dashboard/${assignment.id}/edit`}
               className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E3E0D8] rounded-lg hover:bg-white transition-colors"

@@ -1,7 +1,8 @@
 import { requireInstructor, SessionError } from '@/lib/lti/session'
-import { findAssignmentWithConfig } from '@/lib/assignments/repository'
+import { findAssignmentWithConfig, findReadingAssignmentWithConfig } from '@/lib/assignments/repository'
 import { listCourseMaterials, listAssignmentMaterials } from '@/lib/materials/repository'
 import EditAssignmentClient, { type ClientAssignmentForEdit } from './EditAssignmentClient'
+import EditReadingAssignmentClient, { type ClientReadingAssignmentForEdit } from './EditReadingAssignmentClient'
 import type { AssignmentId } from '@/types/domain'
 
 export const dynamic = 'force-dynamic'
@@ -23,30 +24,40 @@ export default async function EditAssignmentPage({
     throw e
   }
 
-  const assignment = await findAssignmentWithConfig(assignmentId as AssignmentId)
-  if (!assignment || assignment.courseId !== session.courseId) {
-    return <ErrorPage message="Assignment not found." />
+  const id = assignmentId as AssignmentId
+
+  // Try oral assessment first, then reading
+  const oral = await findAssignmentWithConfig(id)
+  if (oral && oral.courseId === session.courseId) {
+    const [courseMaterials, assignmentMaterials] = await Promise.all([
+      listCourseMaterials(session.courseId),
+      listAssignmentMaterials(oral.id),
+    ])
+    const clientAssignment: ClientAssignmentForEdit = {
+      id: oral.id,
+      title: oral.title,
+      config: oral.config,
+      assignmentMaterials: assignmentMaterials.map((m) => ({ title: m.title, content: m.content })),
+    }
+    return (
+      <EditAssignmentClient
+        assignment={clientAssignment}
+        courseMaterials={courseMaterials.map((m) => ({ id: m.id, title: m.title, content: m.content }))}
+      />
+    )
   }
 
-  const [courseMaterials, assignmentMaterials] = await Promise.all([
-    listCourseMaterials(session.courseId),
-    listAssignmentMaterials(assignment.id),
-  ])
-
-  // Strip server-only fields (ltiLineitemUrl, courseId, status) before serializing to client
-  const clientAssignment: ClientAssignmentForEdit = {
-    id: assignment.id,
-    title: assignment.title,
-    config: assignment.config,
-    assignmentMaterials: assignmentMaterials.map((m) => ({ title: m.title, content: m.content })),
+  const reading = await findReadingAssignmentWithConfig(id)
+  if (reading && reading.courseId === session.courseId) {
+    const clientAssignment: ClientReadingAssignmentForEdit = {
+      id: reading.id,
+      title: reading.title,
+      config: reading.config,
+    }
+    return <EditReadingAssignmentClient assignment={clientAssignment} />
   }
 
-  return (
-    <EditAssignmentClient
-      assignment={clientAssignment}
-      courseMaterials={courseMaterials.map((m) => ({ id: m.id, title: m.title, content: m.content }))}
-    />
-  )
+  return <ErrorPage message="Assignment not found." />
 }
 
 function ErrorPage({ message }: { message: string }) {

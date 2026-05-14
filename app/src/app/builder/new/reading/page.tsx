@@ -17,7 +17,7 @@ export default async function ReadingBuilderPage({
 
   let session = null
   let sessionError = false
-  let courseMaterials: Array<{ id: string; title: string; content: string }> = []
+  let courseMaterials: Array<{ id: string; title: string; content: string; pdfStoragePath?: string }> = []
   try {
     session = await requireInstructor()
   } catch (e) {
@@ -31,7 +31,7 @@ export default async function ReadingBuilderPage({
   if (session) {
     try {
       const materials = await listCourseMaterials(session.courseId)
-      courseMaterials = materials.map((m) => ({ id: m.id, title: m.title, content: m.content }))
+      courseMaterials = materials.map((m) => ({ id: m.id, title: m.title, content: m.content, pdfStoragePath: m.pdfStoragePath }))
     } catch (e) {
       console.error('Failed to load course materials:', e)
     }

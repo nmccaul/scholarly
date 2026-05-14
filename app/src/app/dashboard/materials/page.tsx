@@ -27,6 +27,7 @@ export default async function CourseMaterialsPage() {
         id: m.id,
         title: m.title,
         content: m.content,
+        pdfStoragePath: m.pdfStoragePath,
         createdAt: m.createdAt,
       }))}
     />

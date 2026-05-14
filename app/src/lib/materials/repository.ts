@@ -5,6 +5,7 @@ export interface CourseMaterialRecord {
   id: CourseMaterialId
   title: string
   content: string
+  pdfStoragePath?: string
   createdAt: string
 }
 
@@ -12,7 +13,7 @@ export async function listCourseMaterials(courseId: CourseId): Promise<CourseMat
   const db = createServiceClient()
   const { data, error } = await db
     .from('course_materials')
-    .select('id, title, content, created_at')
+    .select('id, title, content, pdf_storage_path, created_at')
     .eq('course_id', courseId)
     .is('assignment_id', null)
     .order('created_at', { ascending: false })
@@ -25,6 +26,7 @@ export async function createCourseMaterial(params: {
   createdBy: UserId
   title: string
   content: string
+  pdfStoragePath?: string
   assignmentId?: AssignmentId
 }): Promise<CourseMaterialId> {
   const db = createServiceClient()
@@ -35,6 +37,7 @@ export async function createCourseMaterial(params: {
       created_by: params.createdBy,
       title: params.title,
       content: params.content,
+      ...(params.pdfStoragePath ? { pdf_storage_path: params.pdfStoragePath } : {}),
       ...(params.assignmentId ? { assignment_id: params.assignmentId } : {}),
     })
     .select('id')
@@ -60,7 +63,7 @@ export async function getMaterialsByIds(ids: CourseMaterialId[], courseId: Cours
   const db = createServiceClient()
   const { data, error } = await db
     .from('course_materials')
-    .select('id, title, content, created_at')
+    .select('id, title, content, pdf_storage_path, created_at')
     .in('id', ids)
     .eq('course_id', courseId)
   if (error) throw new Error(`Failed to fetch materials by IDs: ${error.message}`)
@@ -71,7 +74,7 @@ export async function listAssignmentMaterials(assignmentId: AssignmentId): Promi
   const db = createServiceClient()
   const { data, error } = await db
     .from('course_materials')
-    .select('id, title, content, created_at')
+    .select('id, title, content, pdf_storage_path, created_at')
     .eq('assignment_id', assignmentId)
     .order('created_at', { ascending: true })
   if (error) throw new Error(`Failed to list assignment materials: ${error.message}`)
@@ -105,6 +108,12 @@ export async function replaceAssignmentMaterials(
 }
 
 function toRecord(r: unknown): CourseMaterialRecord {
-  const row = r as { id: string; title: string; content: string; created_at: string }
-  return { id: row.id as CourseMaterialId, title: row.title, content: row.content, createdAt: row.created_at }
+  const row = r as { id: string; title: string; content: string; pdf_storage_path?: string | null; created_at: string }
+  return {
+    id: row.id as CourseMaterialId,
+    title: row.title,
+    content: row.content,
+    pdfStoragePath: row.pdf_storage_path ?? undefined,
+    createdAt: row.created_at,
+  }
 }

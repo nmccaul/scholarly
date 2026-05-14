@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
 import { apiError } from '@/lib/api/response'
+import { sectionPdfPath, uploadPdf } from '@/lib/storage/materials'
 import { PDFParse } from 'pdf-parse'
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024
 
 export async function POST(req: NextRequest) {
+  let session
   try {
-    await requireInstructor()
+    session = await requireInstructor()
   } catch (e) {
     if (e instanceof SessionError) return apiError(e.message, 401)
     if (e instanceof ForbiddenError) return apiError(e.message, 403)
@@ -64,6 +66,16 @@ export async function POST(req: NextRequest) {
     .trim()
     .slice(0, 200) || 'Uploaded PDF'
 
-  return NextResponse.json({ title, content })
+  // Upload full PDF to storage (non-fatal)
+  let storagePath: string | null = null
+  try {
+    const path = sectionPdfPath(session.courseId, crypto.randomUUID())
+    await uploadPdf(path, buffer)
+    storagePath = path
+  } catch (e) {
+    console.error('PDF storage upload failed (non-fatal):', e)
+  }
+
+  return NextResponse.json({ title, content, storagePath })
 }
 

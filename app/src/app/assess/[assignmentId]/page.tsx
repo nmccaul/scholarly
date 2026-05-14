@@ -1,6 +1,7 @@
 import { requireSession, SessionError } from '@/lib/lti/session'
 import { findAssignmentWithConfig, findReadingAssignmentWithConfig } from '@/lib/assignments/repository'
 import AssessmentClient, { type ClientAssignment } from './AssessmentClient'
+import { createSignedPdfUrl } from '@/lib/storage/materials'
 import type { AssignmentId } from '@/types/domain'
 
 export const dynamic = 'force-dynamic'
@@ -64,13 +65,27 @@ export default async function AssessPage({
     )
   }
 
+  const sectionsWithUrls = await Promise.all(
+    readingAssignment.config.sections.map(async (section) => {
+      if (section.sourceType === 'pdf' && section.pdfStoragePath) {
+        try {
+          const pdfUrl = await createSignedPdfUrl(section.pdfStoragePath)
+          return { ...section, pdfUrl }
+        } catch {
+          return section
+        }
+      }
+      return section
+    })
+  )
+
   const clientAssignment: ClientAssignment = {
     type: 'reading_assessment',
     id: readingAssignment.id,
     title: readingAssignment.title,
     pointsPossible: readingAssignment.pointsPossible,
     config: {
-      sections: readingAssignment.config.sections,
+      sections: sectionsWithUrls,
       checkpointType: readingAssignment.config.checkpointType,
       maxFollowUps: readingAssignment.config.maxFollowUps,
       aiGradingEnabled: readingAssignment.config.aiGradingEnabled,

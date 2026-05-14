@@ -10,13 +10,15 @@ export interface AssignmentSummary {
   pointsPossible: number
   createdAt: string
   submissionCount: number
+  submittedCount: number
+  inProgressCount: number
 }
 
 export async function listAssignmentsForCourse(courseId: CourseId): Promise<AssignmentSummary[]> {
   const db = createServiceClient()
   const { data, error } = await db
     .from('assignments')
-    .select('id, title, type, status, points_possible, created_at, submissions(count)')
+    .select('id, title, type, status, points_possible, created_at, submissions(status)')
     .eq('course_id', courseId)
     .order('created_at', { ascending: false })
 
@@ -30,8 +32,11 @@ export async function listAssignmentsForCourse(courseId: CourseId): Promise<Assi
       status: string
       points_possible: number
       created_at: string
-      submissions: Array<{ count: number }>
+      submissions: Array<{ status: string }>
     }
+    const subs = r.submissions ?? []
+    const submittedCount = subs.filter((s) => s.status === 'submitted' || s.status === 'graded').length
+    const inProgressCount = subs.filter((s) => s.status === 'in_progress').length
     return {
       id: r.id as AssignmentId,
       title: r.title,
@@ -39,7 +44,9 @@ export async function listAssignmentsForCourse(courseId: CourseId): Promise<Assi
       status: r.status as AssignmentStatus,
       pointsPossible: r.points_possible,
       createdAt: r.created_at,
-      submissionCount: Number(r.submissions[0]?.count ?? 0),
+      submissionCount: subs.length,
+      submittedCount,
+      inProgressCount,
     }
   })
 }
@@ -299,7 +306,7 @@ export async function findReadingAssignmentWithConfig(
     points_possible: number
     lti_lineitem_url: string | null
     reading_assessment_configs: {
-      sections: Array<{ title: string; content: string }>
+      sections: Array<{ title: string; content: string; sourceType?: 'text' | 'pdf'; pdfStoragePath?: string }>
       checkpoint_type: string
       max_follow_ups: number
       ai_grading_enabled: boolean

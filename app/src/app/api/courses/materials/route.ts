@@ -21,6 +21,7 @@ export async function GET() {
       id: m.id,
       title: m.title,
       content: m.content,
+      pdfStoragePath: m.pdfStoragePath,
       createdAt: m.createdAt,
     }))
     return NextResponse.json(response)
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
       createdBy: session.userId,
       title: body.title.trim(),
       content: body.content.trim(),
+      pdfStoragePath: typeof body.pdfStoragePath === 'string' ? body.pdfStoragePath : undefined,
     })
     return NextResponse.json({ id }, { status: 201 })
   } catch (e) {

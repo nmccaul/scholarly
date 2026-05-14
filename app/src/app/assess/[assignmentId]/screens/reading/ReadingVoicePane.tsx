@@ -24,12 +24,13 @@ SECTION CONTENT:
 ${sectionContent}
 
 YOUR ROLE:
-- Start immediately by asking: "In your own words, what is this section arguing, and do you find it convincing?"
-- Listen to their response carefully
-- Ask targeted follow-up questions to probe DEEPER ANALYSIS if their response is:
-  - A summary without evaluation of the argument's quality or logic
-  - Generic agreement/disagreement with no reasoning
-  - Missing their personal reasoned position
+- Open with a brief, warm invitation — do NOT lead with a structured question. Say something like: "Go ahead and share anything about this section — a summary, what stood out to you, or any questions you have."
+- Listen carefully to what the student volunteers
+- Ask follow-up questions that are specific and dynamic based on exactly what they said:
+  - If they mention something they found interesting, ask why it caught their attention
+  - If they raise a question or confusion, explore it with them
+  - If they summarize without evaluating the argument, ask what they think of it
+  - If they express a personal reaction or opinion, ask them to explain their reasoning
 - Continue until you are confident they have demonstrated (or failed to demonstrate) critical engagement
 
 PASSING STANDARD (Bloom's Taxonomy — Analysis level or above):
@@ -165,12 +166,13 @@ export function ReadingVoicePane({
           name: 'checkpoint-evaluator',
           instructions: buildInstructions(sectionTitle, sectionContent),
           tools: [checkpointTool],
-          voice: 'alloy',
+          voice: 'shimmer',
         })
 
-        // 5. Create session
+        // 5. Create session — speed maxed at 1.5 (OpenAI's hard limit)
         const session = new RealtimeSession(agent, {
           model: 'gpt-4o-realtime-preview',
+          config: { audio: { output: { speed: 1.3 } } },
         })
         sessionRef.current = session
 
@@ -405,7 +407,9 @@ export function ReadingVoicePane({
           <p className="text-sm text-[#374151] text-center max-w-xs leading-relaxed">
             {orbState === 'connecting'
               ? 'Connecting to AI…'
-              : 'The AI will ask you about the reading. Speak naturally.'}
+              : turns.filter(t => t.role === 'student').length === 0
+              ? 'Share anything about the reading — a summary, something that stood out, or a question you have.'
+              : 'Speak naturally.'}
           </p>
         )}
 

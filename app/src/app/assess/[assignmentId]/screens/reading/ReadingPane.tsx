@@ -1,29 +1,44 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+import type { ReadingSection } from '@/types/domain'
+
 interface Props {
-  sectionIndex: number
+  unlockedSections: ReadingSection[]
+  currentSectionIndex: number
   totalSections: number
-  title: string
-  content: string
   checkpointActive: boolean
   onBeginCheckpoint: () => void
+  combinedPdfUrl?: string
+  pdfStitching?: boolean
 }
 
 export function ReadingPane({
-  sectionIndex,
+  unlockedSections,
+  currentSectionIndex,
   totalSections,
-  title,
-  content,
   checkpointActive,
   onBeginCheckpoint,
+  combinedPdfUrl,
+  pdfStitching,
 }: Props) {
+  const currentSectionRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (currentSectionIndex > 0 && currentSectionRef.current) {
+      currentSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [currentSectionIndex])
+
+  const currentSection = unlockedSections[currentSectionIndex]
+
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
+      {/* Header — always shows current section progress */}
       <div className="px-8 py-4 border-b border-[#E3E0D8] bg-white shrink-0">
         <div className="flex items-center justify-between mb-2">
           <div className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#6B7280]">
-            Section {sectionIndex + 1} of {totalSections}
+            Section {currentSectionIndex + 1} of {totalSections}
           </div>
           <div className="flex gap-1.5">
             {Array.from({ length: totalSections }).map((_, i) => (
@@ -31,9 +46,9 @@ export function ReadingPane({
                 key={i}
                 className={[
                   'h-1 w-6 rounded-full transition-colors duration-300',
-                  i < sectionIndex
+                  i < currentSectionIndex
                     ? 'bg-[#10B981]'
-                    : i === sectionIndex
+                    : i === currentSectionIndex
                     ? 'bg-[#2563A6]'
                     : 'bg-[#E3E0D8]',
                 ].join(' ')}
@@ -41,15 +56,67 @@ export function ReadingPane({
             ))}
           </div>
         </div>
-        <h2 className="text-lg font-semibold text-[#18202A]">{title}</h2>
+        <h2 className="text-lg font-semibold text-[#18202A]">{currentSection?.title}</h2>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
-        <div className="text-[#374151] text-sm leading-relaxed whitespace-pre-wrap">
-          {content}
+      {/* Body */}
+      {combinedPdfUrl ? (
+        // Single iframe — one scrollbar, all unlocked sections merged into one PDF
+        <iframe
+          src={combinedPdfUrl}
+          className="flex-1 w-full border-0"
+          title="Reading"
+        />
+      ) : pdfStitching ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-5 h-5 border-2 border-[#2563A6] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <p className="text-xs text-[#6B7280]">Loading PDF…</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        // Text sections — stacked with their own scroll
+        <div className="flex-1 overflow-y-auto">
+          {unlockedSections.map((section, i) => {
+            const isCompleted = i < currentSectionIndex
+            const isCurrent = i === currentSectionIndex
+
+            return (
+              <div key={i} ref={isCurrent ? currentSectionRef : null}>
+                {i > 0 && (
+                  <div className="flex items-center gap-4 px-8 py-4">
+                    <div className="flex-1 h-px bg-[#E3E0D8]" />
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-[#10B981] shrink-0">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 14 14" fill="none">
+                        <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M4.5 7l2 2 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Section {i} complete
+                    </span>
+                    <div className="flex-1 h-px bg-[#E3E0D8]" />
+                  </div>
+                )}
+
+                {isCompleted && (
+                  <div className="px-8 pb-3">
+                    <p className="font-mono text-[10px] font-medium uppercase tracking-widest text-[#8A8F98] mb-0.5">
+                      Section {i + 1}
+                    </p>
+                    <h3 className="text-base font-semibold text-[#6B7280]">{section.title}</h3>
+                  </div>
+                )}
+
+                <div className="px-8 py-6">
+                  <div className="text-[#374151] text-sm leading-relaxed whitespace-pre-wrap">
+                    {section.content}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+          <div className="h-4" />
+        </div>
+      )}
 
       {/* Footer */}
       <div className="px-8 py-4 border-t border-[#E3E0D8] bg-white shrink-0">

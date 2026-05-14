@@ -58,6 +58,9 @@ export interface RubricCriterion {
 export interface ReadingSection {
   title: string
   content: string
+  sourceType?: 'text' | 'pdf'
+  pdfStoragePath?: string
+  pdfUrl?: string  // signed URL populated server-side for student display
 }
 
 export interface CheckpointConversationTurn {

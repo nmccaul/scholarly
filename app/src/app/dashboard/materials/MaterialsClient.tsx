@@ -7,6 +7,7 @@ interface Material {
   id: string
   title: string
   content: string
+  pdfStoragePath?: string | null
   createdAt: string
 }
 
@@ -34,17 +35,17 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
     setError(null)
   }
 
-  async function saveMaterial(title: string, content: string) {
+  async function saveMaterial(title: string, content: string, pdfStoragePath?: string | null) {
     const res = await fetch('/api/courses/materials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, ...(pdfStoragePath ? { pdfStoragePath } : {}) }),
     })
     const data = await res.json().catch(() => ({})) as { id?: string; error?: string }
     if (!res.ok) throw new Error(data.error ?? 'Failed to save material')
     if (!data.id) throw new Error('Unexpected response from server')
     setMaterials((prev) => [
-      { id: data.id!, title, content, createdAt: new Date().toISOString() },
+      { id: data.id!, title, content, pdfStoragePath, createdAt: new Date().toISOString() },
       ...prev,
     ])
     resetForm()
@@ -98,9 +99,9 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
         method: 'POST',
         body: formData,
       })
-      const extracted = await extractRes.json().catch(() => ({})) as { title?: string; content?: string; error?: string }
+      const extracted = await extractRes.json().catch(() => ({})) as { title?: string; content?: string; storagePath?: string | null; error?: string }
       if (!extractRes.ok) throw new Error(extracted.error ?? 'Failed to extract PDF')
-      await saveMaterial(extracted.title ?? draftFile.name, extracted.content ?? '')
+      await saveMaterial(extracted.title ?? draftFile.name, extracted.content ?? '', extracted.storagePath)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to extract PDF')
     } finally {
@@ -291,8 +292,16 @@ export default function MaterialsClient({ initialMaterials }: { initialMaterials
             {materials.map((m) => (
               <div key={m.id} className="rounded-lg border border-[#E3E0D8] bg-white p-5">
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <h3 className="font-medium text-[#18202A]">{m.title}</h3>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="font-medium text-[#18202A] truncate">{m.title}</h3>
+                    {m.pdfStoragePath && (
+                      <span className="shrink-0 font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">
+                        PDF
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 shrink-0">
+
                     {confirmDeleteId === m.id ? (
                       <>
                         <span className="text-xs text-[#6B7280]">Remove?</span>
