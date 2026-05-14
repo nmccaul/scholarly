@@ -6,10 +6,12 @@ import { getOpenAIClient } from '@/lib/ai/client'
 import { createServiceClient } from '@/lib/supabase/client'
 import { sectionPdfPath, uploadPdf } from '@/lib/storage/materials'
 import { splitPdfByPageRanges } from '@/lib/pdf/split'
-import { PDFParse } from 'pdf-parse'
 import { apiError } from '@/lib/api/response'
 import type { GenerateReadingAssignmentRequest, GenerateReadingAssignmentResponse } from '@/types/api'
 import type { CourseMaterialId } from '@/types/domain'
+
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
 
 const MAX_DIRECTION_LENGTH = 2000
 
@@ -72,11 +74,12 @@ export async function POST(req: NextRequest) {
       }
       const buffer = Buffer.from(await fileData.arrayBuffer())
 
-      // Extract per-page text
+      // Extract per-page text — dynamic import keeps the module out of the text-path bundle
+      const { PDFParse } = await import('pdf-parse')
       const parser = new PDFParse({ data: buffer })
       const result = await parser.getText()
       const totalPages = result.total
-      const pageTexts = result.pages.map((p) => p.text.trim())
+      const pageTexts = result.pages.map((p: { text: string }) => p.text.trim())
 
       if (pageTexts.length === 0 || pageTexts.every((t) => !t)) {
         return apiError('No readable text found in this PDF.', 422)
