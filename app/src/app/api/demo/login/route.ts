@@ -7,7 +7,7 @@ import { apiError } from '@/lib/api/response'
 import type { LtiSession, LtiSub } from '@/types/domain'
 
 const DEMO_TTL = 30 * 24 * 60 * 60 // 30 days
-const RATE_LIMIT_MAX = 5
+const RATE_LIMIT_MAX = 20
 const RATE_LIMIT_WINDOW = 3600 // 1 hour
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
