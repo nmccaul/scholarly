@@ -179,7 +179,8 @@ export async function POST(req: NextRequest) {
     const response: GenerateReadingAssignmentResponse = result
     return NextResponse.json(response)
   } catch (e) {
-    console.error('Reading assignment generation failed:', e)
-    return apiError('Generation failed. Please try again.', 500)
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('Reading assignment generation failed:', msg)
+    return apiError(`Generation failed: ${msg}`, 500)
   }
 }
