@@ -196,6 +196,19 @@ export interface CreateAssignmentParams {
   selectedMaterialIds?: string[]
 }
 
+export async function getAssignmentCourseId(
+  assignmentId: AssignmentId
+): Promise<CourseId | null> {
+  const db = createServiceClient()
+  const { data, error } = await db
+    .from('assignments')
+    .select('course_id')
+    .eq('id', assignmentId)
+    .single()
+  if (error || !data) return null
+  return (data as unknown as { course_id: string }).course_id as CourseId
+}
+
 export async function updateAssignmentLtiFields(
   assignmentId: AssignmentId,
   resourceLinkId: string,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, SessionError, requireInstructor, ForbiddenError } from '@/lib/lti/session'
-import { findAssignmentWithConfig, deleteAssignment, updateAssignment } from '@/lib/assignments/repository'
+import { findAssignmentWithConfig, deleteAssignment, updateAssignment, getAssignmentCourseId } from '@/lib/assignments/repository'
 import { replaceAssignmentMaterials } from '@/lib/materials/repository'
 import { validateOralAssessmentBody } from '@/lib/assignments/validation'
 import { apiError } from '@/lib/api/response'
@@ -105,9 +105,9 @@ export async function DELETE(
   }
 
   const { id } = await params
-  const assignment = await findAssignmentWithConfig(id as AssignmentId)
-  if (!assignment || assignment.courseId !== session.courseId) return apiError('Assignment not found', 404)
+  const courseId = await getAssignmentCourseId(id as AssignmentId)
+  if (!courseId || courseId !== session.courseId) return apiError('Assignment not found', 404)
 
-  await deleteAssignment(assignment.id)
+  await deleteAssignment(id as AssignmentId)
   return NextResponse.json({ ok: true })
 }
