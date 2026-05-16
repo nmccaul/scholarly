@@ -1,5 +1,4 @@
 import { requireInstructor, SessionError, ForbiddenError } from '@/lib/lti/session'
-import { listCourseMaterials } from '@/lib/materials/repository'
 import { ReadingBuilderClient } from './ReadingBuilderClient'
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +16,6 @@ export default async function ReadingBuilderPage({
 
   let session = null
   let sessionError = false
-  let courseMaterials: Array<{ id: string; title: string; content: string; pdfStoragePath?: string }> = []
   try {
     session = await requireInstructor()
   } catch (e) {
@@ -25,15 +23,6 @@ export default async function ReadingBuilderPage({
       sessionError = true
     } else {
       throw e
-    }
-  }
-
-  if (session) {
-    try {
-      const materials = await listCourseMaterials(session.courseId)
-      courseMaterials = materials.map((m) => ({ id: m.id, title: m.title, content: m.content, pdfStoragePath: m.pdfStoragePath }))
-    } catch (e) {
-      console.error('Failed to load course materials:', e)
     }
   }
 
@@ -61,7 +50,6 @@ export default async function ReadingBuilderPage({
       returnUrl={returnUrl ?? ''}
       dlData={dlData}
       isDevMode={DEV_MODE || isDemo}
-      courseMaterials={courseMaterials}
     />
   )
 }
