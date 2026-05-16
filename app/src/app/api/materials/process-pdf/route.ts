@@ -4,13 +4,31 @@ import { apiError } from '@/lib/api/response'
 import { getOpenAIClient } from '@/lib/ai/client'
 import { sectionPdfPath, uploadPdf } from '@/lib/storage/materials'
 import { splitPdfByPageRanges } from '@/lib/pdf/split'
-import { PDFParse } from 'pdf-parse'
 import type { ProcessPdfResponse, ProcessPdfSectionResult } from '@/types/api'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024
 const MAX_PAGES_PER_SECTION_TEXT = 50000
+
+// Polyfill DOMMatrix for environments where @napi-rs/canvas is unavailable.
+// pdfjs-dist/legacy creates `const SCALE_MATRIX = new DOMMatrix()` at module
+// init time; without this stub the cold-start crashes before we parse anything.
+function ensureDomMatrix() {
+  if (typeof globalThis.DOMMatrix === 'undefined') {
+    class DOMMatrixStub {
+      a=1; b=0; c=0; d=1; e=0; f=0
+      m11=1; m12=0; m13=0; m14=0
+      m21=0; m22=1; m23=0; m24=0
+      m31=0; m32=0; m33=1; m34=0
+      m41=0; m42=0; m43=0; m44=1
+      is2D=true; isIdentity=true
+      constructor(_init?: string | number[]) {}
+    }
+    (globalThis as Record<string, unknown>).DOMMatrix = DOMMatrixStub
+  }
+}
 
 export async function POST(req: NextRequest) {
   let session
@@ -38,7 +56,13 @@ export async function POST(req: NextRequest) {
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  // 1. Extract per-page text using getText() which returns pages array
+  // Load pdf-parse dynamically AFTER the DOMMatrix polyfill is in place.
+  // Static imports run before handler code and would crash on cold start when
+  // @napi-rs/canvas (pdfjs-dist's DOMMatrix source) is unavailable.
+  ensureDomMatrix()
+  const { PDFParse } = await import('pdf-parse')
+
+  // 1. Extract per-page text
   let pageTexts: string[] = []
   let totalPages = 0
 
@@ -56,7 +80,7 @@ export async function POST(req: NextRequest) {
     return apiError('No readable text found in this PDF.', 422)
   }
 
-  // 2. AI section split — instruct to split only at page boundaries
+  // 2. AI section split
   let aiSections: Array<{ title: string; startPage: number; endPage: number }>
   try {
     const client = getOpenAIClient()
@@ -102,7 +126,6 @@ export async function POST(req: NextRequest) {
     }))
   } catch (e) {
     console.error('AI section split failed:', e)
-    // Fallback: one section covering all pages
     aiSections = [{ title: 'Full Document', startPage: 1, endPage: totalPages }]
   }
 

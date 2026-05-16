@@ -8,6 +8,7 @@ import type {
   CreateAssignmentResponse,
   RubricCriterionInput,
   GenerateReadingAssignmentResponse,
+  ProcessPdfResponse,
 } from '@/types/api'
 
 interface AssignmentMaterialDraft {
@@ -64,6 +65,10 @@ export function ReadingBuilderClient({
   const [generateError, setGenerateError] = useState<string | null>(null)
   // Sections are generated silently — not shown for editing
   const [generatedSections, setGeneratedSections] = useState<GeneratedSections | null>(null)
+  // PDF direct flow
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [pdfProcessing, setPdfProcessing] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
 
   const canGenerate = !generating && (form.selectedMaterialIds.length > 0 || form.assignmentMaterials.length > 0)
   const totalPoints = form.rubric.reduce((sum, c) => sum + (c.maxPoints || 0), 0)
@@ -92,6 +97,36 @@ export function ReadingBuilderClient({
       setGenerateError(e instanceof Error ? e.message : 'Generation failed')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  async function handlePdfGenerate() {
+    if (!pdfFile) return
+    setPdfProcessing(true)
+    setPdfError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', pdfFile)
+      const res = await fetch('/api/materials/process-pdf', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({})) as ProcessPdfResponse & { error?: string }
+      if (!res.ok) throw new Error(data.error ?? 'PDF processing failed')
+
+      const sections = data.sections.map((s) => ({
+        title: s.title,
+        content: s.content,
+        sourceType: 'pdf' as const,
+        pdfStoragePath: s.pdfStoragePath,
+      }))
+      setGeneratedSections({ sections, count: sections.length })
+      setGenerated(true)
+      if (!form.title) {
+        const pdfTitle = pdfFile.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim()
+        setForm((f) => ({ ...f, title: pdfTitle }))
+      }
+    } catch (e) {
+      setPdfError(e instanceof Error ? e.message : 'Failed to process PDF')
+    } finally {
+      setPdfProcessing(false)
     }
   }
 
@@ -304,6 +339,51 @@ export function ReadingBuilderClient({
                   for reuse later.
                 </p>
               )}
+
+              {/* PDF direct generation — students see original PDF, not extracted text */}
+              <div className="mb-4 rounded-lg border border-[#E3E0D8] bg-[#FAF9F6] p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <PdfIcon className="w-4 h-4 text-[#2563A6] shrink-0" />
+                  <p className="text-xs font-semibold text-[#374151]">Generate sections from a PDF</p>
+                </div>
+                <p className="text-xs text-[#8A8F98] mb-3">
+                  Upload a PDF and AI will split it into gated sections. Students read from the original document — not extracted text.
+                </p>
+                <div className="flex items-center gap-2">
+                  <label className="flex-1 cursor-pointer">
+                    <div className={[
+                      'flex items-center gap-2 rounded-md border px-3 py-1.5 bg-white transition-colors',
+                      pdfFile ? 'border-[#2563A6] text-[#18202A]' : 'border-[#E3E0D8] text-[#8A8F98] hover:border-[#AEB8C2]',
+                    ].join(' ')}>
+                      <PdfIcon className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-xs truncate">{pdfFile ? pdfFile.name : 'Choose PDF…'}</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="sr-only"
+                      onChange={(e) => { setPdfFile(e.target.files?.[0] ?? null); setPdfError(null) }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handlePdfGenerate}
+                    disabled={!pdfFile || pdfProcessing}
+                    className="flex items-center gap-1.5 shrink-0 rounded-md bg-[#2563A6] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1E518B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {pdfProcessing ? <><Spinner />Analyzing…</> : 'Generate Sections'}
+                  </button>
+                </div>
+                {pdfProcessing && (
+                  <p className="mt-2 text-xs text-[#6B7280]">Splitting PDF and uploading sections… this takes 10–20 seconds.</p>
+                )}
+                {pdfError && <p className="mt-2 text-xs text-[#C2413A]">{pdfError}</p>}
+                {!pdfProcessing && generatedSections && generatedSections.sections.some((s) => s.sourceType === 'pdf') && (
+                  <p className="mt-2 text-xs text-[#10B981] font-medium">
+                    ✓ {generatedSections.count} sections created from PDF
+                  </p>
+                )}
+              </div>
 
               <div className="mb-4">
                 <label className="mb-1 block text-xs font-medium text-[#6B7280]">
@@ -550,6 +630,17 @@ function BoltIcon({ className }: { className?: string }) {
   return (
     <svg className={className ?? 'w-4 h-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  )
+}
+
+function PdfIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? 'w-4 h-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="9" y1="13" x2="15" y2="13" />
+      <line x1="9" y1="17" x2="13" y2="17" />
     </svg>
   )
 }
