@@ -31,20 +31,20 @@ function ReadingDirections({ checkpointType }: { checkpointType: CheckpointType 
 
   const checkpointTodos = [
     {
-      title: 'Identify the argument',
-      body: 'Say what the section is actually arguing — not just what it discusses or describes.',
+      title: 'Point to something specific',
+      body: 'A moment, idea, claim, image, or detail from this section — not a generic summary.',
     },
     {
-      title: 'Evaluate the evidence',
-      body: 'Take a stance on whether the reasoning and evidence hold up. What works? What doesn\'t?',
+      title: 'Share what you actually thought',
+      body: 'Your interpretation, reaction, surprise, or question. Go beyond what the text said.',
     },
     {
-      title: 'Make a connection',
-      body: 'Tie it to something you already know — another reading, an example, a real situation.',
+      title: 'Connect it to something',
+      body: 'Another reading, an experience, a real situation, or an idea you already have.',
     },
     {
-      title: 'Share your position',
-      body: 'Tell the AI what you think and why. Genuine reasoning beats agreement.',
+      title: 'Develop the thought',
+      body: 'Stay with the idea for a few sentences. One-liners and "I agree" won\'t pass.',
     },
   ]
 
