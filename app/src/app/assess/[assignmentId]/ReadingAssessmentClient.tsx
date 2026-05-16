@@ -70,7 +70,7 @@ export default function ReadingAssessmentClient({
     const unlockedSections = assignment.config.sections.slice(0, state.currentSectionIndex + 1)
 
     return (
-      <div className="flex h-screen overflow-hidden bg-[#FAF9F6]">
+      <div className="flex h-full overflow-hidden bg-[#FAF9F6]">
         {/* Left pane — document content */}
         <div className="w-[58%] flex flex-col border-r border-[#E3E0D8] overflow-hidden">
           <ReadingPane
