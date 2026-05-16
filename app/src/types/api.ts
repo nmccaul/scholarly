@@ -29,7 +29,9 @@ export interface ProcessPdfSectionResult {
 }
 
 export interface ProcessPdfResponse {
+  title: string
   sections: ProcessPdfSectionResult[]
+  rubric: RubricCriterionInput[]
   totalPages: number
 }
 

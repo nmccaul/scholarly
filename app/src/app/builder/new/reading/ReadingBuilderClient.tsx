@@ -79,11 +79,15 @@ export function ReadingBuilderClient({
         pdfStoragePath: s.pdfStoragePath,
       }))
       setGeneratedSections({ sections, count: sections.length })
-      setErrors((prev) => ({ ...prev, sections: undefined }))
-      if (!form.title) {
-        const pdfTitle = pdfFile.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim()
-        setForm((f) => ({ ...f, title: pdfTitle }))
-      }
+      setErrors({})
+      // Title + rubric come straight from the AI design; fall back to filename
+      // for title if AI didn't produce one.
+      const fallbackTitle = pdfFile.name.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ').trim()
+      setForm((f) => ({
+        ...f,
+        title: data.title || fallbackTitle || f.title,
+        rubric: data.rubric.length > 0 ? data.rubric : f.rubric,
+      }))
     } catch (e) {
       setPdfError(e instanceof Error ? e.message : 'Failed to process PDF')
     } finally {
@@ -236,7 +240,7 @@ export function ReadingBuilderClient({
                   <div>
                     <p className="text-sm font-semibold text-[#18202A]">Upload a PDF</p>
                     <p className="text-xs text-[#6B7280] leading-relaxed">
-                      AI splits the PDF into gated sections. Students read the original document, page by page.
+                      AI generates the title, splits the PDF into gated sections, and drafts a rubric. Students read the original document, page by page.
                     </p>
                   </div>
                 </div>
@@ -262,16 +266,16 @@ export function ReadingBuilderClient({
                     disabled={!pdfFile || pdfProcessing}
                     className="flex items-center gap-1.5 shrink-0 rounded-md bg-[#2563A6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {pdfProcessing ? <><Spinner />Analyzing…</> : 'Generate from PDF'}
+                    {pdfProcessing ? <><Spinner />Analyzing…</> : 'Generate Assignment from PDF'}
                   </button>
                 </div>
                 {pdfProcessing && (
-                  <p className="mt-2 text-xs text-[#6B7280]">Splitting PDF and uploading sections… this takes 10–20 seconds.</p>
+                  <p className="mt-3 text-xs text-[#6B7280]">Designing assignment, splitting PDF, and drafting rubric… ~15–25 seconds.</p>
                 )}
-                {pdfError && <p className="mt-2 text-xs text-[#C2413A]">{pdfError}</p>}
+                {pdfError && <p className="mt-3 text-xs text-[#C2413A]">{pdfError}</p>}
                 {!pdfProcessing && generatedSections && generatedSections.sections.some((s) => s.sourceType === 'pdf') && (
-                  <p className="mt-2 text-xs text-[#10B981] font-medium">
-                    ✓ {generatedSections.count} sections created. Students will see the original PDF.
+                  <p className="mt-3 text-xs text-[#10B981] font-medium">
+                    ✓ Assignment drafted — {generatedSections.count} sections, title and rubric below. Review and adjust as needed.
                   </p>
                 )}
               </div>

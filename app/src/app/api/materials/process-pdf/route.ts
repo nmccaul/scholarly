@@ -4,7 +4,7 @@ import { apiError } from '@/lib/api/response'
 import { getOpenAIClient } from '@/lib/ai/client'
 import { sectionPdfPath, uploadPdf } from '@/lib/storage/materials'
 import { splitPdfByPageRanges } from '@/lib/pdf/split'
-import type { ProcessPdfResponse, ProcessPdfSectionResult } from '@/types/api'
+import type { ProcessPdfResponse, ProcessPdfSectionResult, RubricCriterionInput } from '@/types/api'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -80,8 +80,15 @@ export async function POST(req: NextRequest) {
     return apiError('No readable text found in this PDF.', 422)
   }
 
-  // 2. AI section split
+  // 2. AI design — title, section breaks, and rubric in one call
+  let assignmentTitle = 'Reading Assignment'
   let aiSections: Array<{ title: string; startPage: number; endPage: number }>
+  let rubric: RubricCriterionInput[] = [
+    { label: 'Argument Analysis', description: 'Identifies and engages with the main argument or thesis.', maxPoints: 7 },
+    { label: 'Evidence Evaluation', description: 'Evaluates the evidence used to support claims.', maxPoints: 6 },
+    { label: 'Critical Position', description: 'Articulates a defensible personal position with reasoning.', maxPoints: 7 },
+  ]
+
   try {
     const client = getOpenAIClient()
     const pageList = pageTexts
@@ -90,33 +97,52 @@ export async function POST(req: NextRequest) {
 
     const completion = await client.chat.completions.create({
       model: 'gpt-4o',
-      temperature: 0.3,
+      temperature: 0.4,
       response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
           content:
-            'You divide academic PDFs into logical reading sections for students. ' +
-            'Splits must occur ONLY at complete page boundaries — never mid-page. ' +
-            'Respond with JSON only.',
+            'You design reading checkpoint assignments from PDFs. Given the per-page text, you produce: ' +
+            '(1) a short engaging title, (2) 2–5 logical section breaks at complete page boundaries, ' +
+            'and (3) a 3–4 criterion grading rubric. Respond with JSON only.',
         },
         {
           role: 'user',
           content:
             `This PDF has ${totalPages} pages. Here is each page's content:\n\n${pageList}\n\n` +
-            'Divide into 2–5 sections at natural content breaks (chapters, topics, major shifts). ' +
-            'Every page must belong to exactly one section. startPage and endPage are 1-indexed and inclusive. ' +
-            'Return: { "sections": [{ "title": string, "startPage": number, "endPage": number }] }',
+            'Return JSON with this exact shape:\n' +
+            '{\n' +
+            '  "title": string,             // short, ≤ 80 chars\n' +
+            '  "sections": [                // 2–5 items, every page covered exactly once\n' +
+            '    { "title": string, "startPage": number, "endPage": number }\n' +
+            '  ],\n' +
+            '  "rubric": [                  // 3–4 criteria, maxPoints summing to exactly 20\n' +
+            '    { "label": string, "description": string, "maxPoints": number }\n' +
+            '  ]\n' +
+            '}\n\n' +
+            'Section guidelines: split at natural content breaks (chapters, topics, major shifts). ' +
+            'startPage and endPage are 1-indexed and inclusive.\n' +
+            'Rubric guidelines: focus on critical reading skills (argument identification, evidence ' +
+            'evaluation, connection-making, quality of personal position). label: 1–3 words. ' +
+            'description: one sentence describing what earns full marks. maxPoints: 4–8 per criterion, ' +
+            'summing to exactly 20.',
         },
       ],
     })
 
     const parsed = JSON.parse(completion.choices[0]?.message?.content ?? '{}') as {
+      title?: unknown
       sections?: Array<{ title: string; startPage: number; endPage: number }>
+      rubric?: Array<{ label: string; description: string; maxPoints: number }>
     }
 
     if (!Array.isArray(parsed.sections) || parsed.sections.length === 0) {
       throw new Error('AI returned no sections')
+    }
+
+    if (typeof parsed.title === 'string' && parsed.title.trim()) {
+      assignmentTitle = parsed.title.trim().slice(0, 200)
     }
 
     aiSections = parsed.sections.map((s) => ({
@@ -124,8 +150,21 @@ export async function POST(req: NextRequest) {
       startPage: Math.max(1, Math.round(Number(s.startPage))),
       endPage: Math.min(totalPages, Math.round(Number(s.endPage))),
     }))
+
+    if (Array.isArray(parsed.rubric) && parsed.rubric.length > 0) {
+      const validated: RubricCriterionInput[] = []
+      for (const c of parsed.rubric) {
+        const label = String(c.label ?? '').trim().slice(0, 100)
+        const description = String(c.description ?? '').trim().slice(0, 500)
+        const maxPoints = Math.max(1, Math.min(100, Math.round(Number(c.maxPoints))))
+        if (label && description && Number.isFinite(maxPoints)) {
+          validated.push({ label, description, maxPoints })
+        }
+      }
+      if (validated.length > 0) rubric = validated.slice(0, 6)
+    }
   } catch (e) {
-    console.error('AI section split failed:', e)
+    console.error('AI design failed (using fallbacks):', e)
     aiSections = [{ title: 'Full Document', startPage: 1, endPage: totalPages }]
   }
 
@@ -172,6 +211,6 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  const response: ProcessPdfResponse = { sections, totalPages }
+  const response: ProcessPdfResponse = { title: assignmentTitle, sections, rubric, totalPages }
   return NextResponse.json(response)
 }
