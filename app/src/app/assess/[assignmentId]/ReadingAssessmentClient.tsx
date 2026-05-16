@@ -26,6 +26,73 @@ interface ReadingAssignment {
   }
 }
 
+function ReadingDirections({
+  rubric,
+  checkpointType,
+  totalPoints,
+}: {
+  rubric: RubricCriterion[]
+  checkpointType: CheckpointType
+  totalPoints: number
+}) {
+  const modeCopy = checkpointType === 'voice'
+    ? 'speak with AI through a voice conversation'
+    : 'have a text conversation with AI'
+
+  return (
+    <div className="flex-1 overflow-y-auto px-7 py-6">
+      <div className="max-w-md mx-auto">
+        <p className="font-mono text-[10px] font-medium uppercase tracking-widest text-[#8A8F98] mb-2">
+          While you read
+        </p>
+        <h3 className="text-lg font-semibold text-[#18202A] mb-1.5">
+          What you&apos;ll be graded on
+        </h3>
+        <p className="text-xs text-[#6B7280] leading-relaxed mb-5">
+          After each section, you&apos;ll {modeCopy} about what you read. Your full conversations are graded together at the end against the rubric below.
+        </p>
+
+        <div className="space-y-2.5 mb-6">
+          {rubric.map((criterion, i) => (
+            <div
+              key={i}
+              className="rounded-lg border border-[#E3E0D8] bg-white p-3.5 hover:border-[#AEB8C2] transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <h4 className="text-sm font-semibold text-[#18202A] leading-snug">
+                  {criterion.label}
+                </h4>
+                <span className="font-mono text-[10px] font-semibold text-[#2563A6] bg-[#EAF2FA] px-1.5 py-0.5 rounded shrink-0">
+                  {criterion.maxPoints} pts
+                </span>
+              </div>
+              <p className="text-xs text-[#6B7280] leading-relaxed">
+                {criterion.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between rounded-md bg-[#FAF9F6] border border-[#E3E0D8] px-3.5 py-2.5 mb-5">
+          <span className="font-mono text-[10px] font-medium uppercase tracking-widest text-[#6B7280]">
+            Total possible
+          </span>
+          <span className="font-mono text-sm font-semibold text-[#18202A]">
+            {totalPoints} pts
+          </span>
+        </div>
+
+        <div className="rounded-md border border-dashed border-[#D4CEC3] px-3.5 py-3 text-center">
+          <p className="text-xs text-[#6B7280] leading-relaxed">
+            Read the section on the left, then click{' '}
+            <span className="font-medium text-[#374151]">&ldquo;I&apos;ve finished reading&rdquo;</span> to begin the checkpoint.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ReadingAssessmentClient({
   assignment,
   isInstructor = false,
@@ -82,30 +149,11 @@ export default function ReadingAssessmentClient({
         {/* Right pane — checkpoint interface */}
         <div className="w-[42%] flex flex-col overflow-hidden">
           {!checkpointActive ? (
-            <div className="flex-1 flex items-center justify-center px-8">
-              <div className="text-center max-w-xs">
-                <div className="w-12 h-12 rounded-full bg-[#F0EEE8] flex items-center justify-center mx-auto mb-4">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#6B7280]">
-                    <path
-                      d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M12 8v4m0 4h.01"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-                <p className="text-sm text-[#6B7280] leading-relaxed">
-                  Read the section on the left, then click{' '}
-                  <span className="font-medium text-[#374151]">&ldquo;I&apos;ve finished reading&rdquo;</span> to
-                  begin the checkpoint.
-                </p>
-              </div>
-            </div>
+            <ReadingDirections
+              rubric={assignment.config.rubric}
+              checkpointType={assignment.config.checkpointType}
+              totalPoints={assignment.pointsPossible}
+            />
           ) : assignment.config.checkpointType === 'text' ? (
             <ReadingChatPane
               submissionId={state.submissionId}
