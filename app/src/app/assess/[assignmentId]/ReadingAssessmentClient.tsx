@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useReading } from './hooks/useReading'
 import { Centered } from './screens/Centered'
 import { AlreadySubmittedScreen } from './screens/AlreadySubmittedScreen'
@@ -11,21 +11,6 @@ import { ReadingChatPane } from './screens/reading/ReadingChatPane'
 import { ReadingVoicePane } from './screens/reading/ReadingVoicePane'
 import { AllSectionsCompleteScreen } from './screens/reading/AllSectionsCompleteScreen'
 import type { AssignmentId, CheckpointType, ReadingSection, RubricCriterion } from '@/types/domain'
-
-async function stitchPdfs(pdfUrls: string[]): Promise<string> {
-  const { PDFDocument } = await import('pdf-lib')
-  const combined = await PDFDocument.create()
-  for (const url of pdfUrls) {
-    const res = await fetch(url)
-    if (!res.ok) throw new Error(`Failed to fetch PDF: ${res.status}`)
-    const buf = await res.arrayBuffer()
-    const doc = await PDFDocument.load(buf)
-    const pages = await combined.copyPages(doc, doc.getPageIndices())
-    pages.forEach((p) => combined.addPage(p))
-  }
-  const bytes = await combined.save()
-  return URL.createObjectURL(new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' }))
-}
 
 interface ReadingAssignment {
   type: 'reading_assessment'
@@ -51,45 +36,11 @@ export default function ReadingAssessmentClient({
   const state = useReading(assignment.id, assignment.config)
   const [submittingFinal, setSubmittingFinal] = useState(false)
   const [checkpointActive, setCheckpointActive] = useState(false)
-  const [combinedPdfUrl, setCombinedPdfUrl] = useState<string | null>(null)
-  const [pdfStitching, setPdfStitching] = useState(false)
-  const prevBlobRef = useRef<string | null>(null)
 
   useEffect(() => {
     state.startInit()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Cleanup blob URL on unmount
-  useEffect(() => {
-    return () => {
-      if (prevBlobRef.current) URL.revokeObjectURL(prevBlobRef.current)
-    }
-  }, [])
-
-  // Stitch unlocked PDF sections into one combined PDF whenever section advances
-  useEffect(() => {
-    const unlockedSections = assignment.config.sections.slice(0, state.currentSectionIndex + 1)
-    const pdfUrls = unlockedSections.map((s) => s.pdfUrl).filter((u): u is string => !!u)
-    if (pdfUrls.length !== unlockedSections.length || pdfUrls.length === 0) return
-
-    let cancelled = false
-    setPdfStitching(true)
-
-    stitchPdfs(pdfUrls).then((url) => {
-      if (cancelled) { URL.revokeObjectURL(url); return }
-      if (prevBlobRef.current) URL.revokeObjectURL(prevBlobRef.current)
-      prevBlobRef.current = url
-      setCombinedPdfUrl(url)
-      setPdfStitching(false)
-    }).catch((e) => {
-      console.error('[ReadingAssessmentClient] PDF stitch failed:', e)
-      if (!cancelled) setPdfStitching(false)
-    })
-
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.currentSectionIndex])
 
   // Reset checkpoint state whenever section advances
   useEffect(() => {
@@ -128,8 +79,6 @@ export default function ReadingAssessmentClient({
             totalSections={state.totalSections}
             checkpointActive={checkpointActive}
             onBeginCheckpoint={() => setCheckpointActive(true)}
-            combinedPdfUrl={combinedPdfUrl ?? undefined}
-            pdfStitching={pdfStitching}
           />
         </div>
 

@@ -9,8 +9,6 @@ interface Props {
   totalSections: number
   checkpointActive: boolean
   onBeginCheckpoint: () => void
-  combinedPdfUrl?: string
-  pdfStitching?: boolean
 }
 
 export function ReadingPane({
@@ -19,8 +17,6 @@ export function ReadingPane({
   totalSections,
   checkpointActive,
   onBeginCheckpoint,
-  combinedPdfUrl,
-  pdfStitching,
 }: Props) {
   const currentSectionRef = useRef<HTMLDivElement>(null)
 
@@ -31,6 +27,7 @@ export function ReadingPane({
   }, [currentSectionIndex])
 
   const currentSection = unlockedSections[currentSectionIndex]
+  const currentPdfUrl = currentSection?.pdfUrl
 
   return (
     <div className="flex flex-col h-full">
@@ -60,22 +57,18 @@ export function ReadingPane({
       </div>
 
       {/* Body */}
-      {combinedPdfUrl ? (
-        // Single iframe — one scrollbar, all unlocked sections merged into one PDF
+      {currentPdfUrl ? (
+        // PDF section — embed the current section's PDF slice in an iframe.
+        // Each section is a separate PDF in storage, so the iframe naturally
+        // gates content to the current section's pages only.
         <iframe
-          src={combinedPdfUrl}
-          className="flex-1 w-full border-0"
-          title="Reading"
+          key={currentPdfUrl}
+          src={currentPdfUrl}
+          className="flex-1 w-full border-0 bg-[#525659]"
+          title={currentSection?.title ?? 'Reading'}
         />
-      ) : pdfStitching ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-5 h-5 border-2 border-[#2563A6] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            <p className="text-xs text-[#6B7280]">Loading PDF…</p>
-          </div>
-        </div>
       ) : (
-        // Text sections — stacked with their own scroll
+        // Text section — stacked with completed sections above for review
         <div className="flex-1 overflow-y-auto">
           {unlockedSections.map((section, i) => {
             const isCompleted = i < currentSectionIndex
