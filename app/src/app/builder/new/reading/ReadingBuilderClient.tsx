@@ -266,6 +266,62 @@ export function ReadingBuilderClient({
             </div>
 
             <div className="p-6">
+              {/* PRIMARY PATH — PDF upload. Students see the PDF in their reading view. */}
+              <div className="mb-5 rounded-lg border-2 border-[#2563A6] bg-[#EAF2FA] p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-md bg-[#2563A6] flex items-center justify-center shrink-0">
+                    <PdfIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#18202A]">Upload a PDF</p>
+                    <p className="text-xs text-[#6B7280] leading-relaxed">
+                      AI splits the PDF into gated sections. Students read the original document, page by page.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="flex-1 cursor-pointer">
+                    <div className={[
+                      'flex items-center gap-2 rounded-md border px-3 py-2 bg-white transition-colors',
+                      pdfFile ? 'border-[#2563A6] text-[#18202A]' : 'border-[#BFD7EA] text-[#6B7280] hover:border-[#2563A6]',
+                    ].join(' ')}>
+                      <PdfIcon className="w-4 h-4 shrink-0" />
+                      <span className="text-sm truncate">{pdfFile ? pdfFile.name : 'Choose PDF file…'}</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="sr-only"
+                      onChange={(e) => { setPdfFile(e.target.files?.[0] ?? null); setPdfError(null) }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handlePdfGenerate}
+                    disabled={!pdfFile || pdfProcessing}
+                    className="flex items-center gap-1.5 shrink-0 rounded-md bg-[#2563A6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1E518B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {pdfProcessing ? <><Spinner />Analyzing…</> : 'Generate from PDF'}
+                  </button>
+                </div>
+                {pdfProcessing && (
+                  <p className="mt-2 text-xs text-[#6B7280]">Splitting PDF and uploading sections… this takes 10–20 seconds.</p>
+                )}
+                {pdfError && <p className="mt-2 text-xs text-[#C2413A]">{pdfError}</p>}
+                {!pdfProcessing && generatedSections && generatedSections.sections.some((s) => s.sourceType === 'pdf') && (
+                  <p className="mt-2 text-xs text-[#10B981] font-medium">
+                    ✓ {generatedSections.count} sections created. Students will see the original PDF.
+                  </p>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex-1 h-px bg-[#E3E0D8]" />
+                <span className="font-mono text-[10px] font-medium uppercase tracking-widest text-[#8A8F98]">or use text content</span>
+                <div className="flex-1 h-px bg-[#E3E0D8]" />
+              </div>
+
               {courseMaterials.length > 0 && (
                 <div className="mb-4">
                   <p className="mb-2 text-xs font-medium text-[#6B7280]">Select reading material</p>
@@ -319,69 +375,15 @@ export function ReadingBuilderClient({
               <div className="mb-4">
                 {addingMaterial ? (
                   <InlineMaterialForm
+                    hidePdfTab
                     onAdd={(m) => { setForm((prev) => ({ ...prev, assignmentMaterials: [...prev.assignmentMaterials, m] })); setAddingMaterial(false) }}
                     onCancel={() => setAddingMaterial(false)}
                   />
                 ) : (
                   <button type="button" onClick={() => setAddingMaterial(true)} className="flex items-center gap-1.5 text-sm font-medium text-[#2563A6] hover:text-[#1E518B] transition-colors">
                     <span className="text-base leading-none">+</span>
-                    Upload reading material
+                    Add text or link
                   </button>
-                )}
-              </div>
-
-              {courseMaterials.length === 0 && form.assignmentMaterials.length === 0 && (
-                <p className="mb-4 text-sm text-[#6B7280]">
-                  Upload material here, or{' '}
-                  <a href="/dashboard/materials" target="_blank" rel="noreferrer" className="text-[#2563A6] hover:underline">
-                    add to your course library
-                  </a>{' '}
-                  for reuse later.
-                </p>
-              )}
-
-              {/* PDF direct generation — students see original PDF, not extracted text */}
-              <div className="mb-4 rounded-lg border border-[#E3E0D8] bg-[#FAF9F6] p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <PdfIcon className="w-4 h-4 text-[#2563A6] shrink-0" />
-                  <p className="text-xs font-semibold text-[#374151]">Generate sections from a PDF</p>
-                </div>
-                <p className="text-xs text-[#8A8F98] mb-3">
-                  Upload a PDF and AI will split it into gated sections. Students read from the original document — not extracted text.
-                </p>
-                <div className="flex items-center gap-2">
-                  <label className="flex-1 cursor-pointer">
-                    <div className={[
-                      'flex items-center gap-2 rounded-md border px-3 py-1.5 bg-white transition-colors',
-                      pdfFile ? 'border-[#2563A6] text-[#18202A]' : 'border-[#E3E0D8] text-[#8A8F98] hover:border-[#AEB8C2]',
-                    ].join(' ')}>
-                      <PdfIcon className="w-3.5 h-3.5 shrink-0" />
-                      <span className="text-xs truncate">{pdfFile ? pdfFile.name : 'Choose PDF…'}</span>
-                    </div>
-                    <input
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      className="sr-only"
-                      onChange={(e) => { setPdfFile(e.target.files?.[0] ?? null); setPdfError(null) }}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handlePdfGenerate}
-                    disabled={!pdfFile || pdfProcessing}
-                    className="flex items-center gap-1.5 shrink-0 rounded-md bg-[#2563A6] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1E518B] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {pdfProcessing ? <><Spinner />Analyzing…</> : 'Generate Sections'}
-                  </button>
-                </div>
-                {pdfProcessing && (
-                  <p className="mt-2 text-xs text-[#6B7280]">Splitting PDF and uploading sections… this takes 10–20 seconds.</p>
-                )}
-                {pdfError && <p className="mt-2 text-xs text-[#C2413A]">{pdfError}</p>}
-                {!pdfProcessing && generatedSections && generatedSections.sections.some((s) => s.sourceType === 'pdf') && (
-                  <p className="mt-2 text-xs text-[#10B981] font-medium">
-                    ✓ {generatedSections.count} sections created from PDF
-                  </p>
                 )}
               </div>
 
@@ -662,8 +664,9 @@ function inputCls(error?: string) {
   ].join(' ')
 }
 
-function InlineMaterialForm({ onAdd, onCancel }: { onAdd: (m: { title: string; content: string }) => void; onCancel: () => void }) {
+function InlineMaterialForm({ onAdd, onCancel, hidePdfTab = false }: { onAdd: (m: { title: string; content: string }) => void; onCancel: () => void; hidePdfTab?: boolean }) {
   const [source, setSource] = useState<'text' | 'url' | 'pdf'>('text')
+  const tabs = hidePdfTab ? (['text', 'url'] as const) : (['text', 'url', 'pdf'] as const)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [url, setUrl] = useState('')
@@ -699,7 +702,7 @@ function InlineMaterialForm({ onAdd, onCancel }: { onAdd: (m: { title: string; c
   return (
     <div className="mt-2 rounded-lg border border-[#E3E0D8] bg-[#FAF9F6] p-4">
       <div className="mb-3 flex gap-1 rounded-md bg-[#E3E0D8] p-0.5 w-fit">
-        {(['text', 'url', 'pdf'] as const).map((s) => (
+        {tabs.map((s) => (
           <button key={s} type="button" onClick={() => { setSource(s); setError(null) }} className={['px-3 py-1 text-xs font-medium rounded transition-colors', source === s ? 'bg-[#2563A6] text-white' : 'text-[#6B7280] hover:text-[#374151]'].join(' ')}>
             {s === 'text' ? 'Text' : s === 'url' ? 'Link' : 'PDF'}
           </button>
