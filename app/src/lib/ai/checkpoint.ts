@@ -31,13 +31,6 @@ This section may be ANY kind of text — an argument-based essay, a poem, a news
 
 ${buildPassCriteriaPrompt(params.checkpointPassMode, params.checkpointActions)}
 
-FAILING — do not pass these responses (regardless of the passing criteria above):
-- Pure summary or paraphrase with no interpretation, reaction, or question
-- Generic reactions with no specific reasoning ("interesting", "I agree", "this was good")
-- Responses under 30 words
-- Responses that don't reference anything specific from this reading
-- Responses that just repeat the prompt back
-
 When failing, generate a follow-up question that is dynamic and specific to exactly what the student said:
 - If they mention something that caught their attention, ask why it stood out
 - If they raise a question or confusion, explore it with them
