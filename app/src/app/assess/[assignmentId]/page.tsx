@@ -90,6 +90,8 @@ export default async function AssessPage({
       maxFollowUps: readingAssignment.config.maxFollowUps,
       aiGradingEnabled: readingAssignment.config.aiGradingEnabled,
       rubric: readingAssignment.config.rubric,
+      checkpointPassMode: readingAssignment.config.checkpointPassMode,
+      checkpointActions: readingAssignment.config.checkpointActions,
     },
   }
 

@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/client'
-import type { AssignmentId, AssignmentStatus, AssignmentType, CheckpointType, CourseMaterialId, CourseId, ReadingSection, UserId } from '@/types/domain'
+import type { AssignmentId, AssignmentStatus, AssignmentType, CheckpointAction, CheckpointPassMode, CheckpointType, CourseMaterialId, CourseId, ReadingSection, UserId } from '@/types/domain'
 import type { RubricCriterionInput } from '@/types/api'
 
 export interface AssignmentSummary {
@@ -294,6 +294,8 @@ export interface ReadingAssignmentWithConfig {
     maxFollowUps: number
     aiGradingEnabled: boolean
     rubric: Array<{ label: string; description: string; maxPoints: number }>
+    checkpointPassMode: CheckpointPassMode
+    checkpointActions: CheckpointAction[]
   }
 }
 
@@ -311,6 +313,14 @@ export async function findReadingAssignmentWithConfig(
 
   if (error || !data) return null
 
+  type RubricRow = { label: string; description: string; max_points: number }
+  type WrappedRubric = {
+    v: 2
+    criteria: RubricRow[]
+    checkpointPassMode?: string
+    checkpointActions?: string[]
+  }
+
   const row = data as unknown as {
     id: string
     course_id: string
@@ -323,12 +333,14 @@ export async function findReadingAssignmentWithConfig(
       checkpoint_type: string
       max_follow_ups: number
       ai_grading_enabled: boolean
-      rubric: Array<{ label: string; description: string; max_points: number }>
+      rubric: RubricRow[] | WrappedRubric
     } | null
   }
 
   const config = row.reading_assessment_configs
   if (!config) return null
+
+  const { criteria, checkpointPassMode, checkpointActions } = unwrapRubric(config.rubric)
 
   return {
     id: row.id as AssignmentId,
@@ -343,12 +355,53 @@ export async function findReadingAssignmentWithConfig(
       checkpointType: config.checkpoint_type as CheckpointType,
       maxFollowUps: config.max_follow_ups,
       aiGradingEnabled: config.ai_grading_enabled,
-      rubric: config.rubric.map((c) => ({
+      rubric: criteria.map((c) => ({
         label: c.label,
         description: c.description,
         maxPoints: c.max_points,
       })),
+      checkpointPassMode,
+      checkpointActions,
     },
+  }
+}
+
+// The rubric JSONB column holds either the legacy array shape or a wrapped
+// object that also stores the checkpoint pass settings — this lets us add the
+// new fields without a DB migration.
+type StoredRubricCriterion = { label: string; description: string; max_points: number }
+type StoredRubricWrapped = {
+  v: 2
+  criteria: StoredRubricCriterion[]
+  checkpointPassMode?: string
+  checkpointActions?: string[]
+}
+
+function unwrapRubric(raw: StoredRubricCriterion[] | StoredRubricWrapped): {
+  criteria: StoredRubricCriterion[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
+} {
+  if (Array.isArray(raw)) {
+    return { criteria: raw, checkpointPassMode: 'engagement', checkpointActions: [] }
+  }
+  const mode: CheckpointPassMode = raw.checkpointPassMode === 'actions' ? 'actions' : 'engagement'
+  const actions = (raw.checkpointActions ?? []).filter((a): a is CheckpointAction =>
+    a === 'ask_question' || a === 'share_thought' || a === 'answer_question'
+  )
+  return { criteria: raw.criteria ?? [], checkpointPassMode: mode, checkpointActions: actions }
+}
+
+function wrapRubric(
+  rubric: RubricCriterionInput[],
+  checkpointPassMode: CheckpointPassMode,
+  checkpointActions: CheckpointAction[]
+): StoredRubricWrapped {
+  return {
+    v: 2,
+    criteria: rubric.map((c) => ({ label: c.label, description: c.description, max_points: c.maxPoints })),
+    checkpointPassMode,
+    checkpointActions,
   }
 }
 
@@ -362,6 +415,8 @@ export interface CreateReadingAssignmentParams {
   maxFollowUps: number
   aiGradingEnabled: boolean
   rubric: RubricCriterionInput[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
 }
 
 export async function createReadingAssignment(
@@ -394,11 +449,7 @@ export async function createReadingAssignment(
     checkpoint_type: params.checkpointType,
     max_follow_ups: params.maxFollowUps,
     ai_grading_enabled: params.aiGradingEnabled,
-    rubric: params.rubric.map((c) => ({
-      label: c.label,
-      description: c.description,
-      max_points: c.maxPoints,
-    })),
+    rubric: wrapRubric(params.rubric, params.checkpointPassMode, params.checkpointActions),
   })
 
   if (configError) {
@@ -416,6 +467,8 @@ export interface UpdateReadingAssignmentParams {
   maxFollowUps: number
   aiGradingEnabled: boolean
   rubric: RubricCriterionInput[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
 }
 
 export async function updateReadingAssignment(
@@ -438,11 +491,7 @@ export async function updateReadingAssignment(
       checkpoint_type: params.checkpointType,
       max_follow_ups: params.maxFollowUps,
       ai_grading_enabled: params.aiGradingEnabled,
-      rubric: params.rubric.map((c) => ({
-        label: c.label,
-        description: c.description,
-        max_points: c.maxPoints,
-      })),
+      rubric: wrapRubric(params.rubric, params.checkpointPassMode, params.checkpointActions),
     })
     .eq('assignment_id', assignmentId)
 

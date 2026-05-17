@@ -9,6 +9,7 @@ import type {
   RubricCriterionInput,
   ProcessPdfResponse,
 } from '@/types/api'
+import type { CheckpointAction, CheckpointPassMode } from '@/types/domain'
 
 interface FormState {
   title: string
@@ -16,6 +17,8 @@ interface FormState {
   maxFollowUps: number
   aiGradingEnabled: boolean
   rubric: RubricCriterionInput[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
 }
 
 interface SectionDraft {
@@ -36,6 +39,8 @@ const DEFAULT_FORM: FormState = {
   maxFollowUps: 3,
   aiGradingEnabled: true,
   rubric: [{ label: '', description: '', maxPoints: 10 }],
+  checkpointPassMode: 'engagement',
+  checkpointActions: [],
 }
 
 export function ReadingBuilderClient({
@@ -116,12 +121,15 @@ export function ReadingBuilderClient({
     const next: Partial<Record<string, string>> = {}
     if (!form.title.trim()) next.title = 'Required'
     else if (form.title.length > 200) next.title = 'Max 200 characters'
-    if (!generatedSections) next.sections = 'Click "Generate" first to create sections from your material'
+    if (!generatedSections) next.sections = 'Upload a PDF above to create sections from your material'
     form.rubric.forEach((c, i) => {
       if (!c.label.trim()) next[`rubric_${i}_label`] = 'Required'
       if (!c.description.trim()) next[`rubric_${i}_description`] = 'Required'
       if (!c.maxPoints || c.maxPoints < 1) next[`rubric_${i}_points`] = 'Min 1'
     })
+    if (form.checkpointPassMode === 'actions' && form.checkpointActions.length === 0) {
+      next.checkpointActions = 'Pick at least one action'
+    }
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -144,6 +152,8 @@ export function ReadingBuilderClient({
         maxFollowUps: form.maxFollowUps,
         aiGradingEnabled: form.aiGradingEnabled,
         rubric: form.rubric,
+        checkpointPassMode: form.checkpointPassMode,
+        checkpointActions: form.checkpointActions,
         returnUrl,
         dlData,
       }
@@ -310,10 +320,71 @@ export function ReadingBuilderClient({
                 </div>
               ) : (
                 <div className="rounded-md border border-dashed border-[#D4CEC3] px-4 py-10 text-center">
-                  <p className="text-xs text-[#8A8F98]">Select material above and click Generate — AI will divide it into sections automatically.</p>
+                  <p className="text-xs text-[#8A8F98]">Upload a PDF above — AI will divide it into sections automatically.</p>
                 </div>
               )}
               {errors.sections && <p className="mt-2 text-xs text-[#C2413A]">{errors.sections}</p>}
+
+              {/* Pass mode setting */}
+              <div className="mt-6 pt-5 border-t border-[#E3E0D8]">
+                <label className="block mb-1 text-xs font-medium text-[#374151]">
+                  What allows a student to move on from a checkpoint?
+                </label>
+                <p className="mb-2 text-xs text-[#8A8F98] leading-relaxed">
+                  This controls the AI&apos;s passing standard for every section.
+                </p>
+                <select
+                  value={form.checkpointPassMode}
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    checkpointPassMode: e.target.value as CheckpointPassMode,
+                    // Reset actions when switching back to engagement
+                    checkpointActions: e.target.value === 'engagement' ? [] : f.checkpointActions,
+                  }))}
+                  className="w-full rounded-md border border-[#E3E0D8] bg-white px-3 py-2 text-sm text-[#18202A] outline-none focus:ring-2 focus:ring-[#2563A6] focus:border-transparent"
+                >
+                  <option value="engagement">Let AI decide if they&apos;ve engaged critically</option>
+                  <option value="actions">Pass when they complete specific actions</option>
+                </select>
+
+                {form.checkpointPassMode === 'actions' && (
+                  <div className="mt-3 rounded-md border border-[#E3E0D8] bg-[#FAF9F6] p-3">
+                    <p className="mb-2 text-xs font-medium text-[#374151]">
+                      Pass when student does ANY of these:
+                    </p>
+                    <div className="space-y-1.5">
+                      {([
+                        { id: 'ask_question' as const, label: 'Ask a question about the section' },
+                        { id: 'share_thought' as const, label: 'Share a thought or observation' },
+                        { id: 'answer_question' as const, label: 'Answer a question the AI asks' },
+                      ]).map((opt) => {
+                        const checked = form.checkpointActions.includes(opt.id)
+                        return (
+                          <label key={opt.id} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  checkpointActions: e.target.checked
+                                    ? [...f.checkpointActions, opt.id]
+                                    : f.checkpointActions.filter((a) => a !== opt.id),
+                                }))
+                              }
+                              className="h-4 w-4 rounded border-[#D4CEC3] text-[#2563A6] focus:ring-[#2563A6]"
+                            />
+                            <span className="text-sm text-[#374151]">{opt.label}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                    {errors.checkpointActions && (
+                      <p className="mt-2 text-xs text-[#C2413A]">{errors.checkpointActions}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </Section>
 
             {/* Right — Title + Checkpoint */}

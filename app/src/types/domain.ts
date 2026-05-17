@@ -13,6 +13,9 @@ export type AssignmentType = 'oral_assessment' | 'reading_assessment'
 
 export type CheckpointType = 'text' | 'voice'
 
+export type CheckpointPassMode = 'engagement' | 'actions'
+export type CheckpointAction = 'ask_question' | 'share_thought' | 'answer_question'
+
 export type CheckpointStatus = 'locked' | 'in_progress' | 'passed' | 'force_unlocked'
 
 export type AssignmentStatus = 'draft' | 'published' | 'archived'
@@ -87,6 +90,8 @@ export interface ReadingAssignmentConfig {
   maxFollowUps: number
   aiGradingEnabled: boolean
   rubric: RubricCriterion[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
 }
 
 export interface OralAssessmentConfig {

@@ -11,7 +11,7 @@ import { FollowUpScreen } from './screens/FollowUpScreen'
 import { ReviewScreen } from './screens/ReviewScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import ReadingAssessmentClient from './ReadingAssessmentClient'
-import type { AssignmentId, CheckpointType, ReadingSection, RubricCriterion } from '@/types/domain'
+import type { AssignmentId, CheckpointAction, CheckpointPassMode, CheckpointType, ReadingSection, RubricCriterion } from '@/types/domain'
 
 function TeacherPreviewBanner({ assignmentId }: { assignmentId: AssignmentId }) {
   return (
@@ -60,6 +60,8 @@ export type ClientAssignment =
         maxFollowUps: number
         aiGradingEnabled: boolean
         rubric: RubricCriterion[]
+        checkpointPassMode: CheckpointPassMode
+        checkpointActions: CheckpointAction[]
       }
     }
 

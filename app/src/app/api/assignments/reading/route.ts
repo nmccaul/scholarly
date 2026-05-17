@@ -48,6 +48,8 @@ export async function POST(req: NextRequest) {
     maxFollowUps: body.maxFollowUps,
     aiGradingEnabled: body.aiGradingEnabled,
     rubric: body.rubric,
+    checkpointPassMode: body.checkpointPassMode,
+    checkpointActions: body.checkpointActions,
   })
 
   const jwt = isDemo

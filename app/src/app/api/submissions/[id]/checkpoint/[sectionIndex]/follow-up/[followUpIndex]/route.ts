@@ -78,6 +78,8 @@ export async function POST(
     sectionTitle: section.title,
     sectionContent: section.content,
     conversation: updatedCheckpoint.conversation,
+    checkpointPassMode: assignment.config.checkpointPassMode,
+    checkpointActions: assignment.config.checkpointActions,
   })
 
   const nextFollowUpIndex = followUpIndex + 1

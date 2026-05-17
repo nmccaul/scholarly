@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { AssignmentId } from '@/types/domain'
+import type { AssignmentId, CheckpointAction, CheckpointPassMode } from '@/types/domain'
 import type { UpdateReadingAssessmentRequest, RubricCriterionInput } from '@/types/api'
 
 interface SectionDraft {
@@ -19,6 +19,8 @@ interface FormState {
   maxFollowUps: number
   aiGradingEnabled: boolean
   rubric: RubricCriterionInput[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
 }
 
 export interface ClientReadingAssignmentForEdit {
@@ -30,6 +32,8 @@ export interface ClientReadingAssignmentForEdit {
     maxFollowUps: number
     aiGradingEnabled: boolean
     rubric: Array<{ label: string; description: string; maxPoints: number }>
+    checkpointPassMode: CheckpointPassMode
+    checkpointActions: CheckpointAction[]
   }
 }
 
@@ -46,6 +50,8 @@ export default function EditReadingAssignmentClient({
     maxFollowUps: assignment.config.maxFollowUps,
     aiGradingEnabled: assignment.config.aiGradingEnabled,
     rubric: assignment.config.rubric,
+    checkpointPassMode: assignment.config.checkpointPassMode,
+    checkpointActions: assignment.config.checkpointActions,
   })
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -133,6 +139,8 @@ export default function EditReadingAssignmentClient({
         maxFollowUps: form.maxFollowUps,
         aiGradingEnabled: form.aiGradingEnabled,
         rubric: form.rubric,
+        checkpointPassMode: form.checkpointPassMode,
+        checkpointActions: form.checkpointActions,
       }
 
       const res = await fetch(`/api/assignments/reading/${assignment.id}`, {

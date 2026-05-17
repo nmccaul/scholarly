@@ -70,6 +70,8 @@ export async function PATCH(
     maxFollowUps: body.maxFollowUps,
     aiGradingEnabled: body.aiGradingEnabled,
     rubric: body.rubric,
+    checkpointPassMode: body.checkpointPassMode,
+    checkpointActions: body.checkpointActions,
   })
 
   return NextResponse.json({ ok: true })

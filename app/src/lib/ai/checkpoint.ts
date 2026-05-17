@@ -1,10 +1,13 @@
 import { getOpenAIClient } from './client'
-import type { AiGradeRationale, CheckpointConversationTurn, CheckpointStatus, ReadingSection, RubricCriterion } from '@/types/domain'
+import { buildPassCriteriaPrompt } from './pass-criteria'
+import type { AiGradeRationale, CheckpointAction, CheckpointConversationTurn, CheckpointPassMode, CheckpointStatus, ReadingSection, RubricCriterion } from '@/types/domain'
 
 export async function evaluateCheckpointResponse(params: {
   sectionTitle: string
   sectionContent: string
   conversation: CheckpointConversationTurn[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
 }): Promise<{
   passed: boolean
   feedbackMessage: string
@@ -22,19 +25,13 @@ export async function evaluateCheckpointResponse(params: {
       messages: [
         {
           role: 'system',
-          content: `You are an academic reading evaluator. Decide whether the student has demonstrated CRITICAL ENGAGEMENT with the reading section.
+          content: `You are an academic reading evaluator. Decide whether the student has passed the checkpoint for the reading section below.
 
-This section may be ANY kind of text — an argument-based essay, a poem, a news article, a primary source, a memoir, a textbook chapter introducing concepts. Do NOT require the student to identify or evaluate an "argument" unless the text actually makes one. Critical engagement means the student is thinking with the text, not just receiving it.
+This section may be ANY kind of text — an argument-based essay, a poem, a news article, a primary source, a memoir, a textbook chapter introducing concepts. Do NOT require the student to identify or evaluate an "argument" unless the text actually makes one.
 
-PASSING — the student demonstrates critical engagement when their response:
-- References something SPECIFIC from this text (a moment, idea, claim, image, character, observation, etc.)
-- Goes beyond summary — they share interpretation, reaction, a question, or an insight
-- Reflects their OWN thinking, not just paraphrasing what was said
-- Develops more than a single thought — at least a couple of connected ideas
+${buildPassCriteriaPrompt(params.checkpointPassMode, params.checkpointActions)}
 
-Any of these count as engagement: interpreting a passage, reacting personally, noticing something surprising, raising a thoughtful question, connecting to something they know, articulating confusion they want to work through, or evaluating reasoning when reasoning is present.
-
-FAILING — do not pass these responses:
+FAILING — do not pass these responses (regardless of the passing criteria above):
 - Pure summary or paraphrase with no interpretation, reaction, or question
 - Generic reactions with no specific reasoning ("interesting", "I agree", "this was good")
 - Responses under 30 words

@@ -70,6 +70,8 @@ export async function POST(
     sectionTitle: section.title,
     sectionContent: section.content,
     conversation,
+    checkpointPassMode: assignment.config.checkpointPassMode,
+    checkpointActions: assignment.config.checkpointActions,
   })
 
   if (evaluation.passed) {

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { CheckpointConversationTurn } from '@/types/domain'
+import { buildPassCriteriaPrompt } from '@/lib/ai/pass-criteria'
+import type { CheckpointAction, CheckpointConversationTurn, CheckpointPassMode } from '@/types/domain'
 
 type OrbState = 'connecting' | 'listening' | 'speaking' | 'paused' | 'ending' | 'passed' | 'force-unlocked'
 
@@ -10,10 +11,17 @@ interface Props {
   sectionIndex: number
   sectionTitle: string
   sectionContent: string
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
   onCheckpointResolved: (newSectionIndex: number) => void
 }
 
-function buildInstructions(sectionTitle: string, sectionContent: string): string {
+function buildInstructions(
+  sectionTitle: string,
+  sectionContent: string,
+  passMode: CheckpointPassMode,
+  actions: CheckpointAction[]
+): string {
   return `You are an academic reading evaluator conducting a voice checkpoint.
 
 The student has just finished reading the following section:
@@ -23,7 +31,7 @@ SECTION TITLE: ${sectionTitle}
 SECTION CONTENT:
 ${sectionContent}
 
-The section may be ANY kind of text — an argument-based essay, a poem, a news article, a primary source, a memoir, a textbook chapter. Do NOT require the student to identify or evaluate an "argument" unless the text actually makes one. Critical engagement means the student is thinking with the text, not just receiving it.
+The section may be ANY kind of text — an argument-based essay, a poem, a news article, a primary source, a memoir, a textbook chapter. Do NOT require the student to identify or evaluate an "argument" unless the text actually makes one.
 
 YOUR ROLE:
 - Open with a brief, warm invitation — do NOT lead with a structured question. Say something like: "Go ahead and share anything about this section — what stood out, what you thought, or any questions you have."
@@ -33,18 +41,12 @@ YOUR ROLE:
   - If they raise a question or confusion, explore it with them
   - If they summarize without interpreting, ask what they actually think of it
   - If they react vaguely, ask them to point to a specific moment in the text and explain
-- Continue until you are confident they have demonstrated (or failed to demonstrate) critical engagement
+- Continue until you are confident they have demonstrated (or failed to demonstrate) what passes this checkpoint
 
-PASSING — the student demonstrates critical engagement when their responses:
-- Reference something SPECIFIC from this text (a moment, idea, claim, image, observation)
-- Go beyond summary — they share interpretation, reaction, a question, or an insight
-- Reflect their OWN thinking, not just paraphrasing
-- Develop more than a single thought — at least a couple of connected ideas
-
-Any of these count: interpreting a passage, reacting personally, noticing something surprising, raising a thoughtful question, connecting to something they know, articulating confusion they want to work through, or evaluating reasoning when reasoning is present.
+${buildPassCriteriaPrompt(passMode, actions)}
 
 When you have made your determination, call checkpoint_decision:
-- passed: true if they demonstrated critical engagement, false otherwise
+- passed: true if they met the passing criteria above, false otherwise
 - feedback: 1–2 sentences of constructive feedback for the student
 
 Keep questions concise. This is a brief checkpoint, not an interrogation.`
@@ -55,6 +57,8 @@ export function ReadingVoicePane({
   sectionIndex,
   sectionTitle,
   sectionContent,
+  checkpointPassMode,
+  checkpointActions,
   onCheckpointResolved,
 }: Props) {
   const [orbState, setOrbState] = useState<OrbState>('connecting')
@@ -168,7 +172,7 @@ export function ReadingVoicePane({
         // 4. Create agent with instructions + tool
         const agent = new RealtimeAgent({
           name: 'checkpoint-evaluator',
-          instructions: buildInstructions(sectionTitle, sectionContent),
+          instructions: buildInstructions(sectionTitle, sectionContent, checkpointPassMode, checkpointActions),
           tools: [checkpointTool],
           voice: 'shimmer',
         })

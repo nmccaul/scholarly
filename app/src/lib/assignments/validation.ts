@@ -87,8 +87,13 @@ interface ReadingBody {
   maxFollowUps?: unknown
   aiGradingEnabled?: unknown
   rubric?: unknown
+  checkpointPassMode?: unknown
+  checkpointActions?: unknown
   returnUrl?: unknown
 }
+
+const VALID_PASS_MODES = ['engagement', 'actions'] as const
+const VALID_ACTIONS = ['ask_question', 'share_thought', 'answer_question'] as const
 
 export function validateReadingAssessmentBody(
   body: ReadingBody,
@@ -133,6 +138,20 @@ export function validateReadingAssessmentBody(
     if (!Number.isFinite(pts) || pts < 1 || pts > 100) {
       return 'each rubric criterion maxPoints must be 1–100'
     }
+  }
+  if (!VALID_PASS_MODES.includes(body.checkpointPassMode as typeof VALID_PASS_MODES[number])) {
+    return 'checkpointPassMode must be "engagement" or "actions"'
+  }
+  if (!Array.isArray(body.checkpointActions)) {
+    return 'checkpointActions must be an array'
+  }
+  for (const a of body.checkpointActions) {
+    if (!VALID_ACTIONS.includes(a as typeof VALID_ACTIONS[number])) {
+      return `checkpointActions contains invalid value: ${a}`
+    }
+  }
+  if (body.checkpointPassMode === 'actions' && body.checkpointActions.length === 0) {
+    return 'when checkpointPassMode is "actions", at least one action must be selected'
   }
   if (opts.requireReturnUrl) {
     if (!body.returnUrl || typeof body.returnUrl !== 'string') return 'returnUrl is required'

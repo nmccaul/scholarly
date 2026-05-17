@@ -1,4 +1,4 @@
-import type { AssignmentId, SubmissionId, AssignmentType, AssignmentStatus, CourseId, AiGradeRationale, CourseMaterialId, CheckpointConversationTurn } from './domain'
+import type { AssignmentId, SubmissionId, AssignmentType, AssignmentStatus, CourseId, AiGradeRationale, CourseMaterialId, CheckpointConversationTurn, CheckpointPassMode, CheckpointAction } from './domain'
 
 export interface RubricCriterionInput {
   label: string
@@ -144,6 +144,8 @@ export interface CreateReadingAssessmentRequest {
   maxFollowUps: number
   aiGradingEnabled: boolean
   rubric: RubricCriterionInput[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
   returnUrl: string
   dlData?: string
 }
@@ -155,6 +157,8 @@ export interface UpdateReadingAssessmentRequest {
   maxFollowUps: number
   aiGradingEnabled: boolean
   rubric: RubricCriterionInput[]
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
 }
 
 export interface GenerateReadingAssignmentRequest {

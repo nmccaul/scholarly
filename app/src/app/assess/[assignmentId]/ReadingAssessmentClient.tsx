@@ -10,7 +10,7 @@ import { ReadingPane } from './screens/reading/ReadingPane'
 import { ReadingChatPane } from './screens/reading/ReadingChatPane'
 import { ReadingVoicePane } from './screens/reading/ReadingVoicePane'
 import { AllSectionsCompleteScreen } from './screens/reading/AllSectionsCompleteScreen'
-import type { AssignmentId, CheckpointType, ReadingSection, RubricCriterion } from '@/types/domain'
+import type { AssignmentId, CheckpointAction, CheckpointPassMode, CheckpointType, ReadingSection, RubricCriterion } from '@/types/domain'
 
 interface ReadingAssignment {
   type: 'reading_assessment'
@@ -23,6 +23,8 @@ interface ReadingAssignment {
     maxFollowUps: number
     aiGradingEnabled: boolean
     rubric: RubricCriterion[]
+    checkpointPassMode: CheckpointPassMode
+    checkpointActions: CheckpointAction[]
   }
 }
 
@@ -148,6 +150,8 @@ export default function ReadingAssessmentClient({
               sectionIndex={state.currentSectionIndex}
               sectionTitle={state.currentSection.title}
               sectionContent={state.currentSection.content}
+              checkpointPassMode={assignment.config.checkpointPassMode}
+              checkpointActions={assignment.config.checkpointActions}
               onCheckpointResolved={state.onCheckpointResolved}
             />
           )}
