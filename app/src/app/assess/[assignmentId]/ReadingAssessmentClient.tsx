@@ -28,27 +28,60 @@ interface ReadingAssignment {
   }
 }
 
-function ReadingDirections({ checkpointType }: { checkpointType: CheckpointType }) {
+const ENGAGEMENT_TODOS: Array<{ title: string; body: string }> = [
+  {
+    title: 'Point to something specific',
+    body: 'A moment, idea, claim, image, or detail from this section — not a generic summary.',
+  },
+  {
+    title: 'Share what you actually thought',
+    body: 'Your interpretation, reaction, surprise, or question. Go beyond what the text said.',
+  },
+  {
+    title: 'Connect it to something',
+    body: 'Another reading, an experience, a real situation, or an idea you already have.',
+  },
+  {
+    title: 'Develop the thought',
+    body: 'Stay with the idea for a few sentences. One-liners and "I agree" won\'t pass.',
+  },
+]
+
+const ACTION_TODOS: Record<CheckpointAction, { title: string; body: string }> = {
+  ask_question: {
+    title: 'Ask a question about the section',
+    body: 'A specific question — something you actually wonder, want to dig into, or are confused about.',
+  },
+  share_thought: {
+    title: 'Share a thought or observation',
+    body: 'A reaction, insight, or noticing about something specific in the reading.',
+  },
+  answer_question: {
+    title: 'Answer the AI\'s question',
+    body: 'When the AI asks you something, give a real answer — not "I don\'t know" or one word.',
+  },
+}
+
+function ReadingDirections({
+  checkpointType,
+  checkpointPassMode,
+  checkpointActions,
+}: {
+  checkpointType: CheckpointType
+  checkpointPassMode: CheckpointPassMode
+  checkpointActions: CheckpointAction[]
+}) {
   const modeNoun = checkpointType === 'voice' ? 'voice conversation' : 'text conversation'
 
-  const checkpointTodos = [
-    {
-      title: 'Point to something specific',
-      body: 'A moment, idea, claim, image, or detail from this section — not a generic summary.',
-    },
-    {
-      title: 'Share what you actually thought',
-      body: 'Your interpretation, reaction, surprise, or question. Go beyond what the text said.',
-    },
-    {
-      title: 'Connect it to something',
-      body: 'Another reading, an experience, a real situation, or an idea you already have.',
-    },
-    {
-      title: 'Develop the thought',
-      body: 'Stay with the idea for a few sentences. One-liners and "I agree" won\'t pass.',
-    },
-  ]
+  const isActionsMode = checkpointPassMode === 'actions' && checkpointActions.length > 0
+  const todos = isActionsMode
+    ? checkpointActions.map((a) => ACTION_TODOS[a])
+    : ENGAGEMENT_TODOS
+
+  const heading = isActionsMode ? 'Do any one of these to pass' : 'Be ready to discuss this'
+  const introCopy = isActionsMode
+    ? `When you click "I've finished reading", you'll start a ${modeNoun} with AI. To pass and unlock the next section, do at least one of the following with real substance:`
+    : `When you click "I've finished reading", you'll start a ${modeNoun} with AI. To pass and unlock the next section, your responses should hit these:`
 
   return (
     <div className="flex-1 overflow-y-auto px-7 py-6">
@@ -57,17 +90,17 @@ function ReadingDirections({ checkpointType }: { checkpointType: CheckpointType 
           To unlock the next section
         </p>
         <h3 className="text-lg font-semibold text-[#18202A] mb-1.5">
-          Be ready to discuss this
+          {heading}
         </h3>
         <p className="text-xs text-[#6B7280] leading-relaxed mb-5">
-          When you click <span className="font-medium text-[#374151]">&ldquo;I&apos;ve finished reading&rdquo;</span>, you&apos;ll start a {modeNoun} with AI. To pass and unlock the next section, your responses should hit these:
+          {introCopy}
         </p>
 
         <div className="space-y-2">
-          {checkpointTodos.map((todo, i) => (
+          {todos.map((todo, i) => (
             <div key={i} className="flex items-start gap-3 rounded-lg bg-[#EAF2FA] border border-[#BFD7EA] px-3.5 py-2.5">
               <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2563A6] text-white text-[10px] font-bold shrink-0 mt-0.5">
-                {i + 1}
+                {isActionsMode ? '✓' : i + 1}
               </div>
               <div>
                 <p className="text-sm font-semibold text-[#18202A] leading-snug">{todo.title}</p>
@@ -137,7 +170,11 @@ export default function ReadingAssessmentClient({
         {/* Right pane — checkpoint interface */}
         <div className="w-[42%] flex flex-col overflow-hidden">
           {!checkpointActive ? (
-            <ReadingDirections checkpointType={assignment.config.checkpointType} />
+            <ReadingDirections
+              checkpointType={assignment.config.checkpointType}
+              checkpointPassMode={assignment.config.checkpointPassMode}
+              checkpointActions={assignment.config.checkpointActions}
+            />
           ) : assignment.config.checkpointType === 'text' ? (
             <ReadingChatPane
               submissionId={state.submissionId}
