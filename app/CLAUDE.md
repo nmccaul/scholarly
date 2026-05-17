@@ -38,10 +38,10 @@ Scholarly's assignment library is organized around four modes that describe AI's
 | Assignment | UI badge | Mode |
 |---|---|---|
 | Oral Assessment | No AI | `none` |
-| Checkpoint Reading | AI as Coach | `tutor` |
 | Adaptive Reading Quiz | AI as Tutor | `tutor` |
 | Process Narration | AI as Mentor | `tutor` |
 | Concept Explanation Challenge | AI as Student | `teach` |
+| Checkpoint Reading | AI as Coach | `collaborator` |
 | AI Debate Partner | AI as Teammate | `collaborator` |
 | Socratic Seminar | AI as Simulator | `collaborator` |
 | Research Validity Audit | AI as Tool | `collaborator` |

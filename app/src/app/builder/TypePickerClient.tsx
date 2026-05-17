@@ -28,7 +28,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Checkpoint Reading',
     description: 'Students read section by section; a hard gate requires critical engagement before the next section unlocks. Defeats AI summarization by requiring analysis, not summary.',
     roleLabel: 'AI as Coach',
-    mode: 'tutor',
+    mode: 'collaborator',
     available: true,
     route: 'reading',
   },
