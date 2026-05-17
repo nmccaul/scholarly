@@ -52,7 +52,7 @@ function DirectionsBar({
   const todos = isActionsMode
     ? checkpointActions.map((a) => ACTION_LABELS[a])
     : ENGAGEMENT_TODOS
-  const heading = isActionsMode ? 'To pass · do any one' : 'To pass this checkpoint'
+  const heading = 'To pass this checkpoint'
 
   return (
     <div className="border-b border-[#E3E0D8] bg-[#FAFAF8] px-6 py-3 shrink-0">
