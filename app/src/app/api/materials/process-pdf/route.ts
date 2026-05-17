@@ -84,9 +84,12 @@ export async function POST(req: NextRequest) {
   let assignmentTitle = 'Reading Assignment'
   let aiSections: Array<{ title: string; startPage: number; endPage: number }>
   let rubric: RubricCriterionInput[] = [
-    { label: 'Argument Analysis', description: 'Identifies and engages with the main argument or thesis.', maxPoints: 7 },
-    { label: 'Evidence Evaluation', description: 'Evaluates the evidence used to support claims.', maxPoints: 6 },
-    { label: 'Critical Position', description: 'Articulates a defensible personal position with reasoning.', maxPoints: 7 },
+    {
+      label: 'Critical Engagement',
+      description:
+        'Across all checkpoint conversations, the student references specific moments from the readings, shares their own interpretation or reaction (not just summary), connects ideas to other things they know, and develops their thinking with depth beyond one-line responses.',
+      maxPoints: 20,
+    },
   ]
 
   try {
@@ -105,7 +108,8 @@ export async function POST(req: NextRequest) {
           content:
             'You design reading checkpoint assignments from PDFs. Given the per-page text, you produce: ' +
             '(1) a short engaging title, (2) 2–5 logical section breaks at complete page boundaries, ' +
-            'and (3) a 3–4 criterion grading rubric. Respond with JSON only.',
+            'and (3) a single 20-point grading rubric criterion that measures critical engagement across ' +
+            'the whole reading. Respond with JSON only.',
         },
         {
           role: 'user',
@@ -117,16 +121,19 @@ export async function POST(req: NextRequest) {
             '  "sections": [                // 2–5 items, every page covered exactly once\n' +
             '    { "title": string, "startPage": number, "endPage": number }\n' +
             '  ],\n' +
-            '  "rubric": [                  // 3–4 criteria, maxPoints summing to exactly 20\n' +
-            '    { "label": string, "description": string, "maxPoints": number }\n' +
+            '  "rubric": [                  // EXACTLY ONE criterion, worth 20 points\n' +
+            '    { "label": string, "description": string, "maxPoints": 20 }\n' +
             '  ]\n' +
             '}\n\n' +
             'Section guidelines: split at natural content breaks (chapters, topics, major shifts). ' +
-            'startPage and endPage are 1-indexed and inclusive.\n' +
-            'Rubric guidelines: focus on critical reading skills (argument identification, evidence ' +
-            'evaluation, connection-making, quality of personal position). label: 1–3 words. ' +
-            'description: one sentence describing what earns full marks. maxPoints: 4–8 per criterion, ' +
-            'summing to exactly 20.',
+            'startPage and endPage are 1-indexed and inclusive.\n\n' +
+            'Rubric guidelines: the single criterion must measure CRITICAL ENGAGEMENT across all of the ' +
+            'student\'s checkpoint conversations. Label: "Critical Engagement" (or a close variant tuned ' +
+            'to this reading — e.g. "Critical Engagement with the Argument" if the text is argument-based, ' +
+            'or "Critical Engagement with the Text" for poems, primary sources, or descriptive material). ' +
+            'Description: one sentence describing what full marks look like — referencing specific moments, ' +
+            'sharing interpretation/reaction (not just summary), making connections, and developing thinking ' +
+            'beyond one-line responses. maxPoints must be exactly 20. Do NOT return multiple criteria.',
         },
       ],
     })
