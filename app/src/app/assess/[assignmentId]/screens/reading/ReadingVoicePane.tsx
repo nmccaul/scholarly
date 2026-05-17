@@ -22,20 +22,6 @@ function buildInstructions(
   passMode: CheckpointPassMode,
   actions: CheckpointAction[]
 ): string {
-  const isActions = passMode === 'actions' && actions.length > 0
-
-  const roleSection = isActions
-    ? buildActionsRoleSection(actions)
-    : `YOUR ROLE:
-- Open with a brief, warm invitation — do NOT lead with a structured question. Say something like: "Go ahead and share anything about this section — what stood out, what you thought, or any questions you have."
-- Listen carefully to what the student volunteers
-- Ask follow-up questions that are specific and dynamic based on exactly what they said:
-  - If they mention something that caught their attention, ask why it stood out
-  - If they raise a question or confusion, explore it with them
-  - If they summarize without interpreting, ask what they actually think of it
-  - If they react vaguely, ask them to point to a specific moment in the text and explain
-- Continue until you are confident they have demonstrated (or failed to demonstrate) what passes this checkpoint`
-
   return `You are an academic reading evaluator conducting a voice checkpoint.
 
 The student has just finished reading the following section:
@@ -47,7 +33,15 @@ ${sectionContent}
 
 The section may be ANY kind of text — an argument-based essay, a poem, a news article, a primary source, a memoir, a textbook chapter. Do NOT require the student to identify or evaluate an "argument" unless the text actually makes one.
 
-${roleSection}
+YOUR ROLE:
+- Open with a brief, warm invitation — do NOT lead with a structured question. Say something like: "Go ahead and share anything about this section — what stood out, what you thought, or any questions you have."
+- Listen carefully to what the student volunteers
+- Ask follow-up questions that are specific and dynamic based on exactly what they said:
+  - If they mention something that caught their attention, ask why it stood out
+  - If they raise a question or confusion, explore it with them
+  - If they summarize without interpreting, ask what they actually think of it
+  - If they react vaguely, ask them to point to a specific moment in the text and explain
+- Continue until you are confident they have demonstrated (or failed to demonstrate) what passes this checkpoint
 
 ${buildPassCriteriaPrompt(passMode, actions)}
 
@@ -56,33 +50,6 @@ When you have made your determination, call checkpoint_decision:
 - feedback: 1–2 sentences of constructive feedback for the student
 
 Keep questions concise. This is a brief checkpoint, not an interrogation.`
-}
-
-function buildActionsRoleSection(actions: CheckpointAction[]): string {
-  // Build a natural opening invitation based on what actions are selected
-  const invitationParts: string[] = []
-  if (actions.includes('ask_question')) invitationParts.push('ask any question you have about this section')
-  if (actions.includes('share_thought')) invitationParts.push('share a thought or observation')
-  if (actions.includes('answer_question')) invitationParts.push("answer a question I'll ask you")
-
-  let invitation: string
-  if (invitationParts.length === 1) {
-    invitation = `"Welcome! Go ahead and ${invitationParts[0]} when you're ready."`
-  } else if (invitationParts.length === 2) {
-    invitation = `"Welcome! You can ${invitationParts[0]}, or ${invitationParts[1]} — whichever feels natural."`
-  } else {
-    invitation = `"Welcome! You can ${invitationParts.slice(0, -1).join(', ')}, or ${invitationParts.at(-1)} — whichever feels natural."`
-  }
-
-  const onlyAnswerQuestion = actions.length === 1 && actions[0] === 'answer_question'
-
-  return `YOUR ROLE — the teacher has chosen specific actions as the bar for this checkpoint. Your job is to MAKE IT EASY for the student to do the action, then pass them as soon as they do.
-
-- Open with a brief, warm invitation. Use something like: ${invitation}${onlyAnswerQuestion ? '\n  Then ask them a clear, specific question about something in the section.' : ''}
-- Listen for the moment the student completes ANY one of the selected actions (see PASSING CRITERIA below).
-- THE MOMENT they complete an action, call checkpoint_decision with passed=true. Do NOT keep probing or asking follow-ups to deepen the answer. The teacher has explicitly set this bar — respect it.
-- If after your invitation the student hasn't done the action within a turn or two, give one gentle nudge ("Go ahead and ${invitationParts[0]} whenever you're ready") and then pass them as soon as they do.
-- Do NOT extend the conversation past 2–3 exchanges. This is a brief checkpoint.`
 }
 
 export function ReadingVoicePane({
