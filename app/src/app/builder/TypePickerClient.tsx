@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { AssignmentMode } from '@/types/domain'
 
 interface AssignmentType {
   id: string
   label: string
   description: string
-  roleLabel: string
+  roleLabel: string  // Visible badge text — kept unchanged for now
+  mode: AssignmentMode  // Internal categorization, see CLAUDE.md "AI Mode Framework"
   available: boolean
   route?: string
 }
@@ -18,6 +20,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Oral Assessment',
     description: 'Student speaks a response; AI transcribes, asks follow-up questions, and grades against a rubric.',
     roleLabel: 'No AI',
+    mode: 'none',
     available: true,
   },
   {
@@ -25,6 +28,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Checkpoint Reading',
     description: 'Students read section by section; a hard gate requires critical engagement before the next section unlocks. Defeats AI summarization by requiring analysis, not summary.',
     roleLabel: 'AI as Coach',
+    mode: 'tutor',
     available: true,
     route: 'reading',
   },
@@ -33,6 +37,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Adaptive Reading Quiz',
     description: 'AI generates questions from teacher-uploaded text; adapts based on student answers.',
     roleLabel: 'AI as Tutor',
+    mode: 'tutor',
     available: false,
   },
   {
@@ -40,6 +45,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Process Narration',
     description: 'Student narrates their problem-solving process while working through a problem.',
     roleLabel: 'AI as Mentor',
+    mode: 'tutor',
     available: false,
   },
   {
@@ -47,6 +53,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'AI Debate Partner',
     description: 'Student debates a topic against an AI opponent that argues the other side.',
     roleLabel: 'AI as Teammate',
+    mode: 'collaborator',
     available: false,
   },
   {
@@ -54,6 +61,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Concept Explanation Challenge',
     description: '"Explain this to a 5-year-old" — tests depth of understanding through simplification.',
     roleLabel: 'AI as Student',
+    mode: 'teach',
     available: false,
   },
   {
@@ -61,6 +69,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Socratic Seminar Simulation',
     description: "AI plays devil's advocate; student defends a position through dialogue.",
     roleLabel: 'AI as Simulator',
+    mode: 'collaborator',
     available: false,
   },
   {
@@ -68,6 +77,7 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     label: 'Research Validity Audit',
     description: 'Student evaluates AI-generated sources for credibility and academic validity.',
     roleLabel: 'AI as Tool',
+    mode: 'collaborator',
     available: false,
   },
 ]

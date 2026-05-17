@@ -23,21 +23,33 @@ Higher confidence in AI correlated with *less* critical thinking. The people who
 
 **The dual flywheel:** Apturi's assignments are designed to do two things at once. For students, they create the conditions for deeper thinking — explaining, defending, and engaging with material in real time develops the critical thinking that passive submission never requires. For teachers, those same moments generate the process visibility that makes better instruction possible. The same assignment that amplifies student learning gives teachers the intelligence to amplify it further.
 
-**The Mollick & Mollick framework (2023)**
-Scholarly's assignment library is organized around Mollick & Mollick's peer-reviewed framework — 8 roles that AI can play in education. Every assignment type maps to one of these roles, which are visible to teachers in the type picker:
+**The AI Mode Framework**
+Scholarly's assignment library is organized around four modes that describe AI's role in any assignment. Every assignment type has an `AssignmentMode` (see `src/types/domain.ts`) used internally to categorize and reason about it. The displayed UI badge (`roleLabel`) is still the more granular pedagogy label, but the underlying mode is what we use for design decisions and future grouping.
 
-| Role | What it means |
-|---|---|
-| No AI | Student demonstrates understanding entirely independently |
-| AI as Tutor | AI provides direct, personalized instruction |
-| AI as Coach | AI prompts metacognition and self-regulation |
-| AI as Mentor | AI gives ongoing formative feedback |
-| AI as Teammate | AI collaborates as a partner on a shared task |
-| AI as Student | Student teaches the AI to reinforce their own understanding |
-| AI as Simulator | AI creates realistic practice scenarios |
-| AI as Tool | AI handles specific subtasks; core thinking stays with the student |
+| Mode | Student action | AI role | Learning science basis | Best use |
+|---|---|---|---|---|
+| **No AI** (`'none'`) | Student works independently | None | Assessment validity, independent retrieval | Exams, quizzes, baseline checks |
+| **Tutor Mode** (`'tutor'`) | Student answers first, AI gives guidance | Coach or tutor | Retrieval practice, feedback, formative assessment | Concept review, practice, reading checks |
+| **Teach Mode** (`'teach'`) | Student teaches the AI | Confused student | Protégé Effect, generative learning, elaboration | Deep understanding, explanation, discussion prep |
+| **Collaborator Mode** (`'collaborator'`) | Student develops and improves ideas | Thought partner | Metacognition, elaboration, transfer | Essays, projects, case analysis |
 
-Source: Mollick, E. & Mollick, L. (2023). *Assigning AI: Seven Approaches for Students, with Prompts.* SSRN.
+**How current assignment types map to modes:**
+
+| Assignment | UI badge | Mode |
+|---|---|---|
+| Oral Assessment | No AI | `none` |
+| Checkpoint Reading | AI as Coach | `tutor` |
+| Adaptive Reading Quiz | AI as Tutor | `tutor` |
+| Process Narration | AI as Mentor | `tutor` |
+| Concept Explanation Challenge | AI as Student | `teach` |
+| AI Debate Partner | AI as Teammate | `collaborator` |
+| Socratic Seminar | AI as Simulator | `collaborator` |
+| Research Validity Audit | AI as Tool | `collaborator` |
+
+**Design implications:**
+- Assignments sharing a mode share an interaction shape, so they can share infrastructure: e.g., all Tutor Mode assignments use the same checkpoint/follow-up engine and the same Channel × Standard sub-config (voice/text · engagement/actions).
+- New assignment types must declare their mode in the type picker registry (`src/app/builder/TypePickerClient.tsx`).
+- The displayed `roleLabel` is a more granular pedagogy taxonomy for teachers; the `mode` is the operational classification.
 
 ---
 

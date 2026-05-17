@@ -11,6 +11,10 @@ export type UserRole = 'instructor' | 'learner'
 
 export type AssignmentType = 'oral_assessment' | 'reading_assessment'
 
+// The four-mode framework that categorizes AI's role in any assignment.
+// See CLAUDE.md "AI Mode Framework" for the full description and citations.
+export type AssignmentMode = 'none' | 'tutor' | 'teach' | 'collaborator'
+
 export type CheckpointType = 'text' | 'voice'
 
 export type CheckpointPassMode = 'engagement' | 'actions'
