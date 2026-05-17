@@ -8,10 +8,16 @@ interface AssignmentType {
   id: string
   label: string
   description: string
-  roleLabel: string  // Visible badge text — kept unchanged for now
-  mode: AssignmentMode  // Internal categorization, see CLAUDE.md "AI Mode Framework"
+  mode: AssignmentMode  // See CLAUDE.md "AI Mode Framework"
   available: boolean
   route?: string
+}
+
+const MODE_LABELS: Record<AssignmentMode, string> = {
+  none: 'No AI',
+  tutor: 'Tutor Mode',
+  teach: 'Teach Mode',
+  collaborator: 'Collaborator Mode',
 }
 
 const ASSIGNMENT_TYPES: AssignmentType[] = [
@@ -19,7 +25,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'oral_assessment',
     label: 'Oral Assessment',
     description: 'Student speaks a response; AI transcribes, asks follow-up questions, and grades against a rubric.',
-    roleLabel: 'No AI',
     mode: 'none',
     available: true,
   },
@@ -27,7 +32,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'reading_assessment',
     label: 'Checkpoint Reading',
     description: 'Students read section by section; a hard gate requires critical engagement before the next section unlocks. Defeats AI summarization by requiring analysis, not summary.',
-    roleLabel: 'AI as Coach',
     mode: 'collaborator',
     available: true,
     route: 'reading',
@@ -36,7 +40,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'adaptive_quiz',
     label: 'Adaptive Reading Quiz',
     description: 'AI generates questions from teacher-uploaded text; adapts based on student answers.',
-    roleLabel: 'AI as Tutor',
     mode: 'tutor',
     available: false,
   },
@@ -44,7 +47,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'process_narration',
     label: 'Process Narration',
     description: 'Student narrates their problem-solving process while working through a problem.',
-    roleLabel: 'AI as Mentor',
     mode: 'tutor',
     available: false,
   },
@@ -52,7 +54,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'ai_debate',
     label: 'AI Debate Partner',
     description: 'Student debates a topic against an AI opponent that argues the other side.',
-    roleLabel: 'AI as Teammate',
     mode: 'collaborator',
     available: false,
   },
@@ -60,7 +61,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'concept_explanation',
     label: 'Concept Explanation Challenge',
     description: '"Explain this to a 5-year-old" — tests depth of understanding through simplification.',
-    roleLabel: 'AI as Student',
     mode: 'teach',
     available: false,
   },
@@ -68,7 +68,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'socratic_seminar',
     label: 'Socratic Seminar Simulation',
     description: "AI plays devil's advocate; student defends a position through dialogue.",
-    roleLabel: 'AI as Simulator',
     mode: 'collaborator',
     available: false,
   },
@@ -76,7 +75,6 @@ const ASSIGNMENT_TYPES: AssignmentType[] = [
     id: 'research_audit',
     label: 'Research Validity Audit',
     description: 'Student evaluates AI-generated sources for credibility and academic validity.',
-    roleLabel: 'AI as Tool',
     mode: 'collaborator',
     available: false,
   },
@@ -260,7 +258,7 @@ export default function TypePickerClient({
                     <div className="flex items-center gap-2 mb-1.5">
                       <h3 className="text-base font-semibold text-[#18202A] leading-snug">{type.label}</h3>
                     </div>
-                    <p className="text-[11px] font-mono font-medium text-[#8A8F98] uppercase tracking-wider mb-2">{type.roleLabel}</p>
+                    <p className="text-[11px] font-mono font-medium text-[#8A8F98] uppercase tracking-wider mb-2">{MODE_LABELS[type.mode]}</p>
                     <p className="text-sm text-[#6B7280] leading-relaxed">{type.description}</p>
                   </div>
                   <button
@@ -292,7 +290,7 @@ export default function TypePickerClient({
                     <div className="w-8 h-8 rounded-md bg-[#F0EEE8] flex items-center justify-center shrink-0">
                       <AssignmentIcon id={type.id} className="w-3.5 h-3.5 text-[#AEB8C2]" />
                     </div>
-                    <span className="text-[9px] font-mono font-semibold text-[#AEB8C2] uppercase tracking-wider mt-1.5">{type.roleLabel}</span>
+                    <span className="text-[9px] font-mono font-semibold text-[#AEB8C2] uppercase tracking-wider mt-1.5">{MODE_LABELS[type.mode]}</span>
                   </div>
                   <div className="flex-1">
                     <h3 className="text-sm font-medium text-[#6B7280] leading-snug mb-1">{type.label}</h3>
