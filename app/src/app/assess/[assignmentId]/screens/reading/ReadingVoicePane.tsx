@@ -179,7 +179,7 @@ export function ReadingVoicePane({
 
         // 5. Create session — speed maxed at 1.5 (OpenAI's hard limit)
         const session = new RealtimeSession(agent, {
-          model: 'gpt-4o-realtime-preview',
+          model: 'gpt-realtime',
           config: { audio: { output: { speed: 1.3 } } },
         })
         sessionRef.current = session

@@ -48,7 +48,7 @@ export async function POST(
   const realtimeResponse = await client.realtime.clientSecrets.create({
     session: {
       type: 'realtime',
-      model: 'gpt-4o-realtime-preview',
+      model: 'gpt-realtime',
     },
   })
 
