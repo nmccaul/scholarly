@@ -1,5 +1,15 @@
 import type { CheckpointAction, CheckpointPassMode } from '@/types/domain'
 
+const SKIP_REQUEST_HANDLING = `HANDLING SKIP REQUESTS (only matters BEFORE the checkpoint passes):
+If the student tries to bypass the checkpoint — e.g. "let's move on", "next section", "can we skip this", "I'm done", "I don't want to talk about this", "just pass me" — do NOT comply right away. Keep track of how many times they've asked.
+
+- 1st and 2nd time: push back gently with a specific invitation that points to something concrete in the section. Examples: "Before we move on, what's one thing in this section that surprised you?" or "I hear you — let's stick with it for one more thought. What did you make of [specific idea]?" Stay warm but don't fold.
+- 3rd time: stop pushing back. Call checkpoint_decision with passed=false and feedback="Student requested to skip the checkpoint 3 times without engaging with the section. Section was force-unlocked." This records the force-unlock in their grade.
+
+Skip requests that include real engagement (e.g. "Let's move on — I think the author's main point is X and I disagree because Y") count as engagement; pass them normally and don't treat it as a skip request.
+
+This whole behavior only applies BEFORE the pass. Once the student has passed, they have a "Continue to next section" button — don't push back if they want to leave.`
+
 /**
  * Builds the prompt fragment that tells the AI what allows a student to pass
  * the checkpoint, including the FAILING criteria. Used by both text mode
@@ -40,7 +50,9 @@ MINIMUM FLOOR — only fail responses if they are clearly non-engagement:
 - Empty, one-word, or fewer than 5 words total
 - Completely off-topic (not about this section at all)
 - Just repeating the prompt back verbatim
-- The student has not yet attempted any of the selected actions`
+- The student has not yet attempted any of the selected actions
+
+${SKIP_REQUEST_HANDLING}`
   }
 
   // Engagement mode — the rigorous default
@@ -63,5 +75,7 @@ HOW TO HANDLE THE PASS — this is important:
 - Always RESPOND to what the student said first. Engage with their thought, answer their question, react to their reasoning.
 - Only AFTER you've given a genuine, natural response, quietly call checkpoint_decision in the same turn.
 - Do NOT announce, mention, or hint that the checkpoint was passed. The student's screen will indicate it visually — your job is to keep the conversation natural. Never say "great, you passed", "checkpoint complete", "you got it", "moving on", or anything along those lines.
-- Continue the conversation naturally for as long as the student wants to keep going.`
+- Continue the conversation naturally for as long as the student wants to keep going.
+
+${SKIP_REQUEST_HANDLING}`
 }
