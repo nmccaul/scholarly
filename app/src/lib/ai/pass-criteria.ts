@@ -17,18 +17,24 @@ export function buildPassCriteriaPrompt(
     const actionLines = actions.map((a) => {
       switch (a) {
         case 'ask_question':
-          return '- ASK A QUESTION: the student asks any clear question about THIS section. It does not need to be deep or unique. "Why did the author write X?", "What does Y mean?", "How does this relate to Z?" all count. PASS them as soon as they ask a question.'
+          return '- ASK A QUESTION: the student asks any clear question about THIS section. It does not need to be deep or unique. "Why did the author write X?", "What does Y mean?", "How does this relate to Z?" all count.'
         case 'share_thought':
-          return '- SHARE A THOUGHT: the student shares any thought, reaction, observation, or noticing about THIS section. It does not need to be profound. "I found the part about X interesting" or "This reminds me of Y" both count. PASS them as soon as they share.'
+          return '- SHARE A THOUGHT: the student shares any thought, reaction, observation, or noticing about THIS section. It does not need to be profound. "I found the part about X interesting" or "This reminds me of Y" both count.'
         case 'answer_question':
-          return '- ANSWER A QUESTION: the student gives a real answer when you ask them something — not "I don\'t know" or a single word. As long as they attempt a genuine answer of more than a few words, PASS them.'
+          return '- ANSWER A QUESTION: the student gives a real answer when you ask them something — not "I don\'t know" or a single word. As long as they attempt a genuine answer of more than a few words, this counts.'
       }
     })
 
-    return `PASSING CRITERIA — the teacher has explicitly chosen these actions as sufficient to pass. Pass the student AS SOON AS they do ANY ONE of them during the conversation:
+    return `PASSING CRITERIA — the teacher has chosen these specific actions as sufficient to pass this checkpoint. The student passes once they do ANY ONE of them during the conversation:
 ${actionLines.join('\n')}
 
 CRITICAL: the teacher has decided these actions are sufficient. Do NOT layer on top your own standards about "depth", "critical thinking", "specificity", or "substance". Length doesn't matter. Sophistication doesn't matter. If a student asks "What does this mean?" and the teacher selected ASK A QUESTION — they pass. Trust the teacher's bar.
+
+HOW TO HANDLE THE PASS — this is important:
+- Always RESPOND to what the student said first. If they asked a question, answer it. If they shared a thought, engage with it. If they answered your question, react to their answer.
+- Only AFTER you've given a genuine, natural response, quietly call checkpoint_decision in the same turn.
+- Do NOT announce, mention, or hint that the checkpoint was passed. The student's screen will indicate it visually — your job is to keep the conversation natural. Never say "great, you passed", "checkpoint complete", "you got it", "moving on", or anything along those lines.
+- Continue the conversation naturally for as long as the student wants to keep going.
 
 MINIMUM FLOOR — only fail responses if they are clearly non-engagement:
 - Empty, one-word, or fewer than 5 words total
@@ -51,5 +57,11 @@ FAILING — do not pass these responses:
 - Generic reactions with no specific reasoning ("interesting", "I agree", "this was good")
 - Responses under 30 words
 - Responses that don't reference anything specific from this reading
-- Responses that just repeat the prompt back`
+- Responses that just repeat the prompt back
+
+HOW TO HANDLE THE PASS — this is important:
+- Always RESPOND to what the student said first. Engage with their thought, answer their question, react to their reasoning.
+- Only AFTER you've given a genuine, natural response, quietly call checkpoint_decision in the same turn.
+- Do NOT announce, mention, or hint that the checkpoint was passed. The student's screen will indicate it visually — your job is to keep the conversation natural. Never say "great, you passed", "checkpoint complete", "you got it", "moving on", or anything along those lines.
+- Continue the conversation naturally for as long as the student wants to keep going.`
 }
