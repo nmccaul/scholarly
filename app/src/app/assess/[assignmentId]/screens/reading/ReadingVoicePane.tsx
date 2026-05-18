@@ -288,7 +288,10 @@ export function ReadingVoicePane({
   // ─── Pause / resume ───────────────────────────────────────────────────────
 
   function togglePause() {
-    if (resolvedRef.current) return
+    // Pause is allowed during the normal pre-pass conversation AND during the
+    // post-pass free-chat phase. Only block once the session is actually
+    // closing down (ending / force-unlocked).
+    if (resolvedRef.current && !passedAndChatting) return
     const session = sessionRef.current
     setPaused((prev) => {
       const next = !prev
