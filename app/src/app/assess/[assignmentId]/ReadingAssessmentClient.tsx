@@ -145,7 +145,7 @@ function ActivityInfoModal({ onClose }: { onClose: () => void }) {
             </p>
             <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5 list-disc list-inside marker:text-[#C2413A]">
               <li>Summarize the section</li>
-              <li>Hand out answers</li>
+              <li>Do the thinking for the student</li>
               <li>Let the student skip the section</li>
             </ul>
           </section>
