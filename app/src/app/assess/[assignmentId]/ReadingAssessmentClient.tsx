@@ -28,17 +28,17 @@ interface ReadingAssignment {
   }
 }
 
-const ENGAGEMENT_TODOS = [
-  'Point to something specific in the text',
-  'Share what you actually thought',
-  'Connect it to something else',
-  'Develop the thought beyond one line',
-]
+const ACTION_PHRASES: Record<CheckpointAction, string> = {
+  ask_question: 'ask a question',
+  share_thought: 'share a thought',
+  answer_question: "answer the AI's question",
+}
 
-const ACTION_LABELS: Record<CheckpointAction, string> = {
-  ask_question: 'Ask a question about the section',
-  share_thought: 'Share a thought or observation',
-  answer_question: 'Answer the AI\'s question',
+function joinPhrases(parts: string[]): string {
+  if (parts.length === 0) return ''
+  if (parts.length === 1) return parts[0]!
+  if (parts.length === 2) return `${parts[0]} or ${parts[1]}`
+  return `${parts.slice(0, -1).join(', ')}, or ${parts.at(-1)}`
 }
 
 function DirectionsBar({
@@ -49,26 +49,20 @@ function DirectionsBar({
   checkpointActions: CheckpointAction[]
 }) {
   const isActionsMode = checkpointPassMode === 'actions' && checkpointActions.length > 0
-  const todos = isActionsMode
-    ? checkpointActions.map((a) => ACTION_LABELS[a])
-    : ENGAGEMENT_TODOS
-  const heading = 'To pass this checkpoint'
+  const tail = isActionsMode
+    ? joinPhrases(checkpointActions.map((a) => ACTION_PHRASES[a]))
+    : 'share what stood out, ask a question, or talk through your thinking'
 
   return (
     <div className="border-b border-[#E3E0D8] bg-[#FAFAF8] px-6 py-3 shrink-0">
-      <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#2563A6] mb-2">
-        {heading}
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#2563A6] mb-1.5">
+        Directions
       </p>
-      <ul className="space-y-1">
-        {todos.map((t, i) => (
-          <li key={i} className="flex items-start gap-2 text-xs text-[#374151] leading-snug">
-            <svg className="w-3.5 h-3.5 text-[#2563A6] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>{t}</span>
-          </li>
-        ))}
-      </ul>
+      <p className="text-xs text-[#374151] leading-snug">
+        Read the section on the left. When you&apos;re ready, click{' '}
+        <span className="font-semibold text-[#18202A]">&ldquo;I&apos;ve finished reading&rdquo;</span>{' '}
+        and {tail} with the AI.
+      </p>
     </div>
   )
 }
