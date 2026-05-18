@@ -167,6 +167,7 @@ export default function ReadingAssessmentClient({
               sectionContent={state.currentSection.content}
               checkpointPassMode={assignment.config.checkpointPassMode}
               checkpointActions={assignment.config.checkpointActions}
+              isLastSection={state.currentSectionIndex === state.totalSections - 1}
               onCheckpointResolved={state.onCheckpointResolved}
             />
           )}

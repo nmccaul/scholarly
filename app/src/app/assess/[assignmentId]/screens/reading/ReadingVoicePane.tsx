@@ -13,6 +13,7 @@ interface Props {
   sectionContent: string
   checkpointPassMode: CheckpointPassMode
   checkpointActions: CheckpointAction[]
+  isLastSection: boolean
   onCheckpointResolved: (newSectionIndex: number) => void
 }
 
@@ -49,6 +50,16 @@ When you have made your determination, call checkpoint_decision:
 - passed: true if they met the passing criteria above, false otherwise
 - feedback: 1–2 sentences of constructive feedback for the student
 
+AFTER you call checkpoint_decision with passed=true:
+- The checkpoint is officially passed and recorded — the student sees a "Continue to next section" button they can click whenever they're ready.
+- Congratulate them warmly and briefly (one sentence).
+- Then offer to keep discussing the section if they want — "feel free to keep going if you want to dig in more, or click Continue when you're ready."
+- If they keep talking, engage naturally — explore what interests them, ask honest follow-ups, share thoughts.
+- Don't push them to continue and don't push them to keep talking. Let them lead.
+- Keep responses concise.
+
+Do NOT call checkpoint_decision more than once.
+
 Keep questions concise. This is a brief checkpoint, not an interrogation.`
 }
 
@@ -59,11 +70,17 @@ export function ReadingVoicePane({
   sectionContent,
   checkpointPassMode,
   checkpointActions,
+  isLastSection,
   onCheckpointResolved,
 }: Props) {
   const [orbState, setOrbState] = useState<OrbState>('connecting')
   const [paused, setPaused] = useState(false)
   const [turns, setTurns] = useState<CheckpointConversationTurn[]>([])
+  // After a successful pass, the conversation continues until the student
+  // clicks Continue. nextSectionIndex is captured at pass-time and used by
+  // the button to advance.
+  const [passedAndChatting, setPassedAndChatting] = useState(false)
+  const [nextSectionIndex, setNextSectionIndex] = useState<number | null>(null)
   const sessionRef = useRef<{ close?: () => void; mute?: (m: boolean) => void; interrupt?: () => void } | null>(null)
   const prePauseStateRef = useRef<OrbState>('listening')
   const turnsRef = useRef<CheckpointConversationTurn[]>([])
@@ -137,31 +154,49 @@ export function ReadingVoicePane({
             if (resolvedRef.current) return 'already resolved'
             resolvedRef.current = true
 
+            // Record to server in the background — don't gate the UI on this.
+            const recordResult = fetch(
+              `/api/submissions/${submissionId}/checkpoint/${sectionIndex}/complete`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  conversation: turnsRef.current,
+                  passed,
+                  aiFeedback: feedback,
+                }),
+              }
+            )
+              .then((r) => r.json() as Promise<{ newSectionIndex?: number }>)
+              .catch(() => ({ newSectionIndex: sectionIndex + 1 }))
+
+            if (passed) {
+              // Keep the session OPEN so the student can keep chatting.
+              // The "Continue to next section" button advances them on click.
+              const data = await recordResult
+              const newIdx = data.newSectionIndex ?? sectionIndex + 1
+              setNextSectionIndex(newIdx)
+              setPassedAndChatting(true)
+              setOrbState('passed')
+              // Snap back to a normal listening/speaking state so the orb keeps
+              // animating during the post-pass chat. The audio_start/audio_stopped
+              // listeners below will keep it in sync.
+              setOrbState('listening')
+              return 'Checkpoint passed. Free conversation continues until the student clicks Continue.'
+            }
+
+            // Force-unlock path: close session and auto-advance after a beat.
             setOrbState('ending')
-            // Close session so AI stops talking
             if (typeof sessionRef.current?.close === 'function') {
               sessionRef.current.close()
             }
-
             try {
-              const completeRes = await fetch(
-                `/api/submissions/${submissionId}/checkpoint/${sectionIndex}/complete`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    conversation: turnsRef.current,
-                    passed,
-                    aiFeedback: feedback,
-                  }),
-                }
-              )
-              const data = (await completeRes.json()) as { newSectionIndex?: number }
+              const data = await recordResult
               const newIdx = data.newSectionIndex ?? sectionIndex + 1
-              setOrbState(passed ? 'passed' : 'force-unlocked')
-              setTimeout(() => onResolvedRef.current(newIdx), passed ? 2500 : 3500)
+              setOrbState('force-unlocked')
+              setTimeout(() => onResolvedRef.current(newIdx), 3500)
             } catch {
-              setOrbState(passed ? 'passed' : 'force-unlocked')
+              setOrbState('force-unlocked')
               setTimeout(() => onResolvedRef.current(sectionIndex + 1), 2500)
             }
 
@@ -209,18 +244,24 @@ export function ReadingVoicePane({
           setTurns(newTurns)
         })
 
-        // 7. Orb animation: distinguish AI speaking vs student's turn (skip if paused)
+        // 7. Orb animation: distinguish AI speaking vs student's turn (skip if paused).
+        // Stays active after a pass — the conversation continues until the
+        // student clicks Continue.
         session.on('audio_start', () => {
-          if (!resolvedRef.current) {
-            prePauseStateRef.current = 'speaking'
-            setPaused((p) => { if (!p) setOrbState('speaking'); return p })
-          }
+          prePauseStateRef.current = 'speaking'
+          setPaused((p) => {
+            if (p) return p
+            setOrbState((s) => (s === 'ending' || s === 'force-unlocked' ? s : 'speaking'))
+            return p
+          })
         })
         session.on('audio_stopped', () => {
-          if (!resolvedRef.current) {
-            prePauseStateRef.current = 'listening'
-            setPaused((p) => { if (!p) setOrbState('listening'); return p })
-          }
+          prePauseStateRef.current = 'listening'
+          setPaused((p) => {
+            if (p) return p
+            setOrbState((s) => (s === 'ending' || s === 'force-unlocked' ? s : 'listening'))
+            return p
+          })
         })
 
         // 8. Connect via WebRTC
@@ -271,39 +312,59 @@ export function ReadingVoicePane({
     })
   }
 
+  // ─── Continue / advance ──────────────────────────────────────────────────
+
+  function handleContinue() {
+    const next = nextSectionIndex ?? sectionIndex + 1
+    if (typeof sessionRef.current?.interrupt === 'function') sessionRef.current.interrupt()
+    if (typeof sessionRef.current?.close === 'function') sessionRef.current.close()
+    setOrbState('ending')
+    onResolvedRef.current(next)
+  }
+
   // ─── Orb styling ──────────────────────────────────────────────────────────
 
-  const orbGradient = {
-    connecting: 'from-[#F59E0B] to-[#D97706]',
-    listening: 'from-[#2563A6] to-[#1E518B]',
-    speaking: 'from-[#1D4ED8] to-[#2563A6]',
-    paused: 'from-[#6B7280] to-[#4B5563]',
-    ending: 'from-[#9CA3AF] to-[#6B7280]',
-    passed: 'from-[#10B981] to-[#059669]',
-    'force-unlocked': 'from-[#F59E0B] to-[#D97706]',
-  }[orbState]
+  const orbGradient = passedAndChatting
+    ? 'from-[#10B981] to-[#059669]'  // stays green during pass-and-chat
+    : {
+        connecting: 'from-[#F59E0B] to-[#D97706]',
+        listening: 'from-[#2563A6] to-[#1E518B]',
+        speaking: 'from-[#1D4ED8] to-[#2563A6]',
+        paused: 'from-[#6B7280] to-[#4B5563]',
+        ending: 'from-[#9CA3AF] to-[#6B7280]',
+        passed: 'from-[#10B981] to-[#059669]',
+        'force-unlocked': 'from-[#F59E0B] to-[#D97706]',
+      }[orbState]
 
-  const ringColor = {
-    connecting: 'bg-[#F59E0B]',
-    listening: 'bg-[#2563A6]',
-    speaking: 'bg-[#1D4ED8]',
-    paused: 'bg-[#6B7280]',
-    ending: 'bg-[#9CA3AF]',
-    passed: 'bg-[#10B981]',
-    'force-unlocked': 'bg-[#F59E0B]',
-  }[orbState]
+  const ringColor = passedAndChatting
+    ? 'bg-[#10B981]'
+    : {
+        connecting: 'bg-[#F59E0B]',
+        listening: 'bg-[#2563A6]',
+        speaking: 'bg-[#1D4ED8]',
+        paused: 'bg-[#6B7280]',
+        ending: 'bg-[#9CA3AF]',
+        passed: 'bg-[#10B981]',
+        'force-unlocked': 'bg-[#F59E0B]',
+      }[orbState]
 
   const showRings = orbState === 'speaking' || orbState === 'listening'
 
-  const statusText = {
-    connecting: 'Starting voice session…',
-    listening: 'Listening — speak your response',
-    speaking: 'AI is speaking…',
-    paused: 'Session paused',
-    ending: 'Wrapping up…',
-    passed: 'Checkpoint passed!',
-    'force-unlocked': 'Section unlocked',
-  }[orbState]
+  const statusText = passedAndChatting
+    ? orbState === 'speaking'
+      ? 'Passed · AI is speaking'
+      : orbState === 'paused'
+      ? 'Passed · Session paused'
+      : 'Passed · Keep chatting or click Continue'
+    : {
+        connecting: 'Starting voice session…',
+        listening: 'Listening — speak your response',
+        speaking: 'AI is speaking…',
+        paused: 'Session paused',
+        ending: 'Wrapping up…',
+        passed: 'Checkpoint passed!',
+        'force-unlocked': 'Section unlocked',
+      }[orbState]
 
   const canPause = orbState === 'listening' || orbState === 'speaking' || orbState === 'paused'
 
@@ -393,10 +454,16 @@ export function ReadingVoicePane({
         </div>
 
         {/* Resolution message */}
-        {orbState === 'passed' && (
+        {passedAndChatting ? (
+          <div className="text-center">
+            <p className="text-sm font-semibold text-[#10B981]">Checkpoint passed</p>
+            <p className="text-xs text-[#6B7280] mt-1 max-w-xs leading-relaxed">
+              Keep talking with the AI if you want to dig in more, or click Continue below when you&apos;re ready.
+            </p>
+          </div>
+        ) : orbState === 'passed' && (
           <div className="text-center">
             <p className="text-sm font-semibold text-[#10B981]">Great critical thinking!</p>
-            <p className="text-xs text-[#6B7280] mt-1">Moving to next section…</p>
           </div>
         )}
         {orbState === 'force-unlocked' && (
@@ -411,7 +478,7 @@ export function ReadingVoicePane({
             <p className="text-xs text-[#8A8F98] mt-1">Your microphone is muted. Resume when ready.</p>
           </div>
         )}
-        {(orbState === 'connecting' || orbState === 'listening' || orbState === 'speaking') && (
+        {!passedAndChatting && (orbState === 'connecting' || orbState === 'listening' || orbState === 'speaking') && (
           <p className="text-sm text-[#374151] text-center max-w-xs leading-relaxed">
             {orbState === 'connecting'
               ? 'Connecting to AI…'
@@ -422,8 +489,19 @@ export function ReadingVoicePane({
         )}
 
         {/* Tap hint — only shown briefly on first active state */}
-        {(orbState === 'listening' || orbState === 'speaking') && (
+        {!passedAndChatting && (orbState === 'listening' || orbState === 'speaking') && (
           <p className="mt-4 text-xs text-[#8A8F98]">Tap orb to pause</p>
+        )}
+
+        {/* Continue button — only after passing */}
+        {passedAndChatting && (
+          <button
+            onClick={handleContinue}
+            className="mt-6 flex items-center gap-2 rounded-lg bg-[#10B981] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#059669] transition-colors shadow-sm"
+          >
+            {isLastSection ? 'Finish assignment' : 'Continue to next section'}
+            <span aria-hidden>→</span>
+          </button>
         )}
       </div>
 
