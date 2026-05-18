@@ -61,7 +61,7 @@ function DirectionsBar({
       <p className="text-xs text-[#374151] leading-snug">
         Read the section on the left. When you&apos;re ready, click{' '}
         <span className="font-semibold text-[#18202A]">&ldquo;I&apos;ve finished reading&rdquo;</span>{' '}
-        and {tail} with the AI.
+        and {tail} with the AI. Once you&apos;ve shown you engaged with the material, you&apos;ll be able to move to the next checkpoint.
       </p>
     </div>
   )
