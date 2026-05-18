@@ -125,7 +125,7 @@ function ActivityInfoModal({ onClose }: { onClose: () => void }) {
               AI&apos;s role
             </p>
             <p className="text-xs text-[#374151] leading-relaxed">
-              Collaborator. Not a tutor, not a shortcut.
+              Collaborator.
             </p>
           </section>
 
@@ -134,39 +134,37 @@ function ActivityInfoModal({ onClose }: { onClose: () => void }) {
               Will do
             </p>
             <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5 list-disc list-inside marker:text-[#10B981]">
-              <li>Push back on thin answers</li>
-              <li>Answer specifics briefly</li>
-              <li>Probe vague reasoning</li>
+              <li>Push back on vague answers</li>
+              <li>Answer direct questions briefly, then ask the student to apply it or think deeper</li>
             </ul>
           </section>
 
           <section>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#C2413A] mb-1.5">
-              Won&apos;t do
+              Will not
             </p>
             <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5 list-disc list-inside marker:text-[#C2413A]">
               <li>Summarize the section</li>
-              <li>Hand you answers</li>
-              <li>Let you skip</li>
+              <li>Hand out answers</li>
+              <li>Let the student skip the section</li>
             </ul>
           </section>
 
           <section>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#6B7280] mb-1.5">
-              Why this works — ICAP
+              Why this works <span className="text-[#AEB8C2] font-normal normal-case tracking-normal">— grounded in learning science</span>
             </p>
-            <p className="text-xs text-[#6B7280] leading-relaxed mb-1.5">
-              Engagement modes, worst to best for learning:
-            </p>
-            <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5">
-              <li><span className="text-[#8A8F98]">Passive</span> — reading</li>
-              <li><span className="text-[#8A8F98]">Active</span> — highlighting, notes</li>
-              <li><span className="text-[#8A8F98]">Constructive</span> — writing about it</li>
-              <li><span className="font-semibold text-[#18202A]">Interactive</span> — talking it through with feedback <span className="text-[#10B981] font-semibold">← this</span></li>
-            </ul>
-            <p className="text-xs text-[#6B7280] leading-relaxed mt-2">
-              Bonus: <span className="font-semibold text-[#18202A]">protégé effect</span> — explaining your thinking clarifies it for you.
-            </p>
+            <ol className="text-xs text-[#374151] leading-relaxed space-y-1.5 list-decimal list-inside marker:font-semibold marker:text-[#2563A6]">
+              <li>
+                <span className="font-semibold text-[#18202A]">Active recall</span> — AI asks the student to connect examples to other experiences they&apos;ve learned.
+              </li>
+              <li>
+                <span className="font-semibold text-[#18202A]">Protégé effect</span> — AI asks the student to reiterate what they learned in their own words.
+              </li>
+              <li>
+                <span className="font-semibold text-[#18202A]">ICAP framework</span> — interactive learning (conversations) sits at the top of the engagement hierarchy.
+              </li>
+            </ol>
           </section>
         </div>
       </div>
