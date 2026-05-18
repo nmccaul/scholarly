@@ -211,7 +211,7 @@ export function BuilderClient({
           <p className="text-xs text-[#8A8F98] font-mono mb-6 break-all">{createdAssignmentId}</p>
           <div className="flex flex-col gap-2">
             <a
-              href={`/assess/${createdAssignmentId}`}
+              href={`/assess/${createdAssignmentId}?fresh=1`}
               className="block w-full rounded-lg bg-[#2563A6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E518B] transition-colors"
             >
               Preview as Student

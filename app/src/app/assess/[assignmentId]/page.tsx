@@ -1,17 +1,50 @@
+import { redirect } from 'next/navigation'
 import { requireSession, SessionError } from '@/lib/lti/session'
 import { findAssignmentWithConfig, findReadingAssignmentWithConfig } from '@/lib/assignments/repository'
+import { resetSubmission } from '@/lib/submissions/repository'
+import { resetReadingSubmission } from '@/lib/reading/repository'
+import { createServiceClient } from '@/lib/supabase/client'
 import AssessmentClient, { type ClientAssignment } from './AssessmentClient'
 import { createSignedPdfUrl } from '@/lib/storage/materials'
-import type { AssignmentId } from '@/types/domain'
+import type { AssignmentId, SubmissionId, UserId } from '@/types/domain'
 
 export const dynamic = 'force-dynamic'
 
+async function resetForPreview(assignmentId: AssignmentId, userId: UserId): Promise<void> {
+  const db = createServiceClient()
+  const { data } = await db
+    .from('submissions')
+    .select('id')
+    .eq('assignment_id', assignmentId)
+    .eq('student_id', userId)
+    .maybeSingle()
+
+  if (!data) return  // no submission yet, nothing to reset
+
+  const submissionId = (data as { id: string }).id as SubmissionId
+  // Try oral first, then reading. resetSubmission and resetReadingSubmission
+  // each only touch their own tables, so the wrong one is a no-op.
+  const oral = await findAssignmentWithConfig(assignmentId)
+  if (oral) {
+    await resetSubmission(submissionId)
+    return
+  }
+  const reading = await findReadingAssignmentWithConfig(assignmentId)
+  if (reading) {
+    await resetReadingSubmission(submissionId)
+  }
+}
+
 export default async function AssessPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ assignmentId: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { assignmentId } = await params
+  const sp = await searchParams
+  const fresh = sp.fresh === '1'
 
   let session
   try {
@@ -25,6 +58,13 @@ export default async function AssessPage({
       )
     }
     throw e
+  }
+
+  // Instructor "Preview as Student": reset any in-progress submission so the
+  // preview always starts at section 1, then redirect to the clean URL.
+  if (fresh && session.role === 'instructor') {
+    await resetForPreview(assignmentId as AssignmentId, session.userId)
+    redirect(`/assess/${assignmentId}`)
   }
 
   // Try oral assignment first

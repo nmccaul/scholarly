@@ -79,7 +79,7 @@ export default async function DashboardPage({
               Edit
             </Link>
             <Link
-              href={`/assess/${assignment.id}`}
+              href={`/assess/${assignment.id}?fresh=1`}
               className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E3E0D8] rounded-lg hover:bg-white transition-colors"
             >
               Preview as Student

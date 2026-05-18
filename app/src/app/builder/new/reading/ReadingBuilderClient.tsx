@@ -197,7 +197,7 @@ export function ReadingBuilderClient({
           <p className="text-sm text-[#6B7280] mb-1">Dev mode — Canvas redirect skipped.</p>
           <p className="text-xs text-[#8A8F98] font-mono mb-6 break-all">{createdAssignmentId}</p>
           <div className="flex flex-col gap-2">
-            <a href={`/assess/${createdAssignmentId}`} className="block w-full rounded-lg bg-[#2563A6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E518B] transition-colors">
+            <a href={`/assess/${createdAssignmentId}?fresh=1`} className="block w-full rounded-lg bg-[#2563A6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1E518B] transition-colors">
               Preview as Student
             </a>
             <a href={`/dashboard/${createdAssignmentId}`} className="block w-full rounded-lg border border-[#E3E0D8] px-4 py-2.5 text-sm font-semibold text-[#374151] hover:bg-[#FAF9F6] transition-colors">
