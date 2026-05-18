@@ -67,11 +67,11 @@ function DirectionsBar({
           type="button"
           onClick={() => setShowInfo(true)}
           aria-label="About this activity"
-          className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#E3E0D8] hover:bg-[#2563A6] hover:text-white text-[#6B7280] transition-colors align-text-bottom"
+          className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#2563A6] hover:bg-[#1E518B] text-white shadow-sm transition-colors align-text-bottom ring-1 ring-[#BFD7EA]"
         >
-          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.75}>
             <line x1="12" y1="11" x2="12" y2="17" strokeLinecap="round" />
-            <circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none" />
+            <circle cx="12" cy="7.5" r="1.3" fill="currentColor" stroke="none" />
           </svg>
         </button>
       </p>
