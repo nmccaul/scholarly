@@ -125,47 +125,48 @@ function ActivityInfoModal({ onClose }: { onClose: () => void }) {
               AI&apos;s role
             </p>
             <p className="text-xs text-[#374151] leading-relaxed">
-              The AI is here as a <span className="font-semibold">collaborator</span> — a thought partner to help you engage with the reading. It is not a tutor or a shortcut. The work of reading and thinking is yours; the AI&apos;s job is to push, probe, and keep you honest.
+              Collaborator. Not a tutor, not a shortcut.
             </p>
           </section>
 
           <section>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#10B981] mb-1.5">
-              What the AI will do
+              Will do
             </p>
-            <ul className="text-xs text-[#374151] leading-relaxed space-y-1 list-disc list-inside marker:text-[#10B981]">
-              <li>Engage with your interpretation and push back when it&apos;s thin</li>
-              <li>Answer specific questions briefly, then ask one back</li>
-              <li>Probe your reasoning when you&apos;re vague or generic</li>
+            <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5 list-disc list-inside marker:text-[#10B981]">
+              <li>Push back on thin answers</li>
+              <li>Answer specifics briefly</li>
+              <li>Probe vague reasoning</li>
             </ul>
           </section>
 
           <section>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#C2413A] mb-1.5">
-              What the AI won&apos;t do
+              Won&apos;t do
             </p>
-            <ul className="text-xs text-[#374151] leading-relaxed space-y-1 list-disc list-inside marker:text-[#C2413A]">
-              <li>Summarize, recap, or read the section for you</li>
-              <li>Tell you the &ldquo;right&rdquo; answer or do the thinking</li>
-              <li>Let you skip the checkpoint without engaging</li>
+            <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5 list-disc list-inside marker:text-[#C2413A]">
+              <li>Summarize the section</li>
+              <li>Hand you answers</li>
+              <li>Let you skip</li>
             </ul>
           </section>
 
           <section>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#6B7280] mb-1.5">
-              Why this works
+              Why this works — ICAP
             </p>
-            <ul className="text-xs text-[#374151] leading-relaxed space-y-1.5">
-              <li>
-                <span className="font-semibold text-[#18202A]">Active recall.</span> Retrieving what you read — instead of rereading — builds durable understanding.
-              </li>
-              <li>
-                <span className="font-semibold text-[#18202A]">Generative learning.</span> Putting ideas in your own words and connecting them deepens learning far more than passive consumption.
-              </li>
-              <li>
-                <span className="font-semibold text-[#18202A]">Protégé effect.</span> Articulating and defending your thinking out loud forces you to clarify it for yourself.
-              </li>
+            <p className="text-xs text-[#6B7280] leading-relaxed mb-1.5">
+              Engagement modes, worst to best for learning:
+            </p>
+            <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5">
+              <li><span className="text-[#8A8F98]">Passive</span> — reading</li>
+              <li><span className="text-[#8A8F98]">Active</span> — highlighting, notes</li>
+              <li><span className="text-[#8A8F98]">Constructive</span> — writing about it</li>
+              <li><span className="font-semibold text-[#18202A]">Interactive</span> — talking it through with feedback <span className="text-[#10B981] font-semibold">← this</span></li>
             </ul>
+            <p className="text-xs text-[#6B7280] leading-relaxed mt-2">
+              Bonus: <span className="font-semibold text-[#18202A]">protégé effect</span> — explaining your thinking clarifies it for you.
+            </p>
           </section>
         </div>
       </div>
