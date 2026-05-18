@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useReading } from './hooks/useReading'
 import { Centered } from './screens/Centered'
 import { AlreadySubmittedScreen } from './screens/AlreadySubmittedScreen'
@@ -52,6 +52,7 @@ function DirectionsBar({
   const tail = isActionsMode
     ? joinPhrases(checkpointActions.map((a) => ACTION_PHRASES[a]))
     : 'share what stood out, ask a question, or talk through your thinking'
+  const [showInfo, setShowInfo] = useState(false)
 
   return (
     <div className="border-b border-[#E3E0D8] bg-[#FAFAF8] px-6 py-3 shrink-0">
@@ -61,8 +62,113 @@ function DirectionsBar({
       <p className="text-xs text-[#374151] leading-snug">
         Read the section on the left. When you&apos;re ready, click{' '}
         <span className="font-semibold text-[#18202A]">&ldquo;I&apos;ve finished reading&rdquo;</span>{' '}
-        and {tail}{' '}with the AI. Once you&apos;ve shown you engaged with the material, you&apos;ll be able to move to the next checkpoint.
+        and {tail}{' '}with the AI. Once you&apos;ve shown you engaged with the material, you&apos;ll be able to move to the next checkpoint.{' '}
+        <button
+          type="button"
+          onClick={() => setShowInfo(true)}
+          aria-label="About this activity"
+          className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#E3E0D8] hover:bg-[#2563A6] hover:text-white text-[#6B7280] transition-colors align-text-bottom"
+        >
+          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+            <line x1="12" y1="11" x2="12" y2="17" strokeLinecap="round" />
+            <circle cx="12" cy="7.5" r="1.2" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
       </p>
+      {showInfo && <ActivityInfoModal onClose={() => setShowInfo(false)} />}
+    </div>
+  )
+}
+
+function ActivityInfoModal({ onClose }: { onClose: () => void }) {
+  const handleEsc = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    },
+    [onClose]
+  )
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [handleEsc])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/30" aria-hidden />
+      <div
+        className="relative w-full max-w-md max-h-[80vh] overflow-y-auto rounded-xl bg-white shadow-2xl border border-[#E3E0D8]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#E3E0D8] sticky top-0 bg-white">
+          <h3 className="text-sm font-semibold text-[#18202A]">About this activity</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-[#8A8F98] hover:bg-[#F0EEE8] hover:text-[#18202A] transition-colors"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-4">
+          <section>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#2563A6] mb-1">
+              AI&apos;s role
+            </p>
+            <p className="text-xs text-[#374151] leading-relaxed">
+              The AI is here as a <span className="font-semibold">collaborator</span> — a thought partner to help you engage with the reading. It is not a tutor or a shortcut. The work of reading and thinking is yours; the AI&apos;s job is to push, probe, and keep you honest.
+            </p>
+          </section>
+
+          <section>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#10B981] mb-1.5">
+              What the AI will do
+            </p>
+            <ul className="text-xs text-[#374151] leading-relaxed space-y-1 list-disc list-inside marker:text-[#10B981]">
+              <li>Engage with your interpretation and push back when it&apos;s thin</li>
+              <li>Answer specific questions briefly, then ask one back</li>
+              <li>Probe your reasoning when you&apos;re vague or generic</li>
+            </ul>
+          </section>
+
+          <section>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#C2413A] mb-1.5">
+              What the AI won&apos;t do
+            </p>
+            <ul className="text-xs text-[#374151] leading-relaxed space-y-1 list-disc list-inside marker:text-[#C2413A]">
+              <li>Summarize, recap, or read the section for you</li>
+              <li>Tell you the &ldquo;right&rdquo; answer or do the thinking</li>
+              <li>Let you skip the checkpoint without engaging</li>
+            </ul>
+          </section>
+
+          <section>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#6B7280] mb-1.5">
+              Why this works
+            </p>
+            <ul className="text-xs text-[#374151] leading-relaxed space-y-1.5">
+              <li>
+                <span className="font-semibold text-[#18202A]">Active recall.</span> Retrieving what you read — instead of rereading — builds durable understanding.
+              </li>
+              <li>
+                <span className="font-semibold text-[#18202A]">Generative learning.</span> Putting ideas in your own words and connecting them deepens learning far more than passive consumption.
+              </li>
+              <li>
+                <span className="font-semibold text-[#18202A]">Protégé effect.</span> Articulating and defending your thinking out loud forces you to clarify it for yourself.
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
     </div>
   )
 }
