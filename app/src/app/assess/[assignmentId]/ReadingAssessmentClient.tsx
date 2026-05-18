@@ -134,6 +134,7 @@ function ActivityInfoModal({ onClose }: { onClose: () => void }) {
               Will do
             </p>
             <ul className="text-xs text-[#374151] leading-relaxed space-y-0.5 list-disc list-inside marker:text-[#10B981]">
+              <li>Engage with the student&apos;s interpretation and build on it</li>
               <li>Push back on vague answers</li>
               <li>Answer direct questions briefly, then ask the student to apply it or think deeper</li>
             </ul>
