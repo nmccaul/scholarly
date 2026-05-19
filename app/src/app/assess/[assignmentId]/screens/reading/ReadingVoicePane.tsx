@@ -76,6 +76,11 @@ export function ReadingVoicePane({
   const [passedAndChatting, setPassedAndChatting] = useState(false)
   const [nextSectionIndex, setNextSectionIndex] = useState<number | null>(null)
   const sessionRef = useRef<{ close?: () => void; mute?: (m: boolean) => void; interrupt?: () => void } | null>(null)
+  // We supply our own <audio> element to the WebRTC transport so we can mute
+  // it directly on pause — that's the only way to stop playback instantly.
+  // session.interrupt() tells the server to stop generating, but already-
+  // buffered audio keeps coming out of the speakers.
+  const audioElementRef = useRef<HTMLAudioElement | null>(null)
   const prePauseStateRef = useRef<OrbState>('listening')
   const turnsRef = useRef<CheckpointConversationTurn[]>([])
   const resolvedRef = useRef(false)
@@ -112,7 +117,7 @@ export function ReadingVoicePane({
         if (cancelled) return
 
         // 2. Dynamically import SDK (browser-only, avoids SSR)
-        const [{ RealtimeAgent, RealtimeSession }, { tool }, { z }] = await Promise.all([
+        const [{ RealtimeAgent, RealtimeSession, OpenAIRealtimeWebRTC }, { tool }, { z }] = await Promise.all([
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           import('@openai/agents/realtime') as Promise<any>,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -206,8 +211,15 @@ export function ReadingVoicePane({
           voice: 'shimmer',
         })
 
-        // 5. Create session — speed maxed at 1.5 (OpenAI's hard limit)
+        // 5. Create session — speed maxed at 1.5 (OpenAI's hard limit).
+        // We supply our own audio element to the WebRTC transport so pause can
+        // mute playback instantly (the SDK otherwise creates a hidden audio
+        // element we have no handle to).
+        const transport = new OpenAIRealtimeWebRTC({
+          audioElement: audioElementRef.current ?? undefined,
+        })
         const session = new RealtimeSession(agent, {
+          transport,
           model: 'gpt-realtime',
           config: { audio: { output: { speed: 1.3 } } },
         })
@@ -293,15 +305,20 @@ export function ReadingVoicePane({
     // closing down (ending / force-unlocked).
     if (resolvedRef.current && !passedAndChatting) return
     const session = sessionRef.current
+    const audio = audioElementRef.current
     setPaused((prev) => {
       const next = !prev
       if (next) {
-        // Pausing: interrupt AI speech and mute mic
+        // Pausing: instant audio cutoff (mute the element directly so any
+        // buffered audio plays silently), interrupt the server so it stops
+        // generating, and mute the mic.
+        if (audio) audio.muted = true
         if (typeof session?.interrupt === 'function') session.interrupt()
         if (typeof session?.mute === 'function') session.mute(true)
         setOrbState('paused')
       } else {
-        // Resuming: unmute mic, restore previous orb state
+        // Resuming: unmute audio + mic, restore previous orb state.
+        if (audio) audio.muted = false
         if (typeof session?.mute === 'function') session.mute(false)
         setOrbState(prePauseStateRef.current)
       }
@@ -367,6 +384,10 @@ export function ReadingVoicePane({
 
   return (
     <div className="flex flex-col h-full bg-white">
+      {/* Hidden audio sink — receives the WebRTC remote audio track. We hold
+          a ref so pause can mute it instantly. */}
+      <audio ref={audioElementRef} autoPlay className="hidden" />
+
       {/* Header */}
       <div className="px-6 py-3 border-b border-[#E3E0D8] bg-[#FAFAF8] shrink-0">
         <div className="font-mono text-[11px] font-medium uppercase tracking-widest text-[#6B7280]">
